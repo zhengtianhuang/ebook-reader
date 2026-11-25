@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="書櫃">
+<meta name="theme-color" content="#F6F1E7">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-512.png">
+<title>書櫃 Shelf</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/epubjs@0.3.93/dist/epub.min.js"></script>
+<style>
+/* Layout: library of covers on a warm paper ground; reader is full-bleed paper with hidden chrome that appears on a centre tap. */
+:root{
+  --paper:#F6F1E7; --card:#FFFDF8; --ink:#1F1A14; --muted:#7A6F60; --line:#E3DACA; --accent:#B4532A; --accent2:#2F5D50;
+  --f-display:"Fraunces",Georgia,"Times New Roman",serif;
+  --f-ui:"Noto Sans TC",-apple-system,system-ui,sans-serif;
+  --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){:root{--paper:#17140F;--card:#221E18;--ink:#EDE6D9;--muted:#A0968A;--line:#3A332A;--accent:#E07A4C;--accent2:#7FB8A6;color-scheme:dark}}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--paper);color:var(--ink);font-family:var(--f-ui);-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+[hidden]{display:none!important}
+
+/* ---------- 書櫃 / 搜尋 ---------- */
+#app{min-height:100%;padding:calc(18px + var(--safe-t)) max(20px,env(safe-area-inset-right)) calc(90px + var(--safe-b)) max(20px,env(safe-area-inset-left))}
+.top{display:flex;align-items:baseline;justify-content:space-between;gap:12px;max-width:1100px;margin:0 auto}
+.top h1{font-family:var(--f-display);font-size:2.4rem;margin:0;letter-spacing:-.01em}
+.top h1 span{font-family:var(--f-ui);font-size:1rem;color:var(--muted);font-weight:500;margin-left:8px}
+.importbtn{color:var(--accent);font-weight:700;padding:10px 14px;border-radius:10px;border:1.5px solid var(--accent)}
+.view{max-width:1100px;margin:18px auto 0}
+.sect{font-size:.8rem;letter-spacing:.14em;color:var(--muted);font-weight:700;margin:26px 0 12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:26px 20px}
+.book{display:flex;flex-direction:column;gap:8px;text-align:left;position:relative}
+.cover{aspect-ratio:2/3;width:100%;border-radius:4px 8px 8px 4px;background:var(--line) center/cover no-repeat;box-shadow:0 1px 0 rgba(0,0,0,.08),0 10px 24px -12px rgba(0,0,0,.45);position:relative;overflow:hidden;display:flex;align-items:flex-end;padding:12px;color:#fff;font-family:var(--f-display);font-size:1.05rem;line-height:1.2}
+.cover.noimg{background:linear-gradient(160deg,var(--accent2),#1d3a32)}
+.cover::after{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:linear-gradient(90deg,rgba(0,0,0,.25),transparent)}
+.book b{font-family:var(--f-display);font-size:1rem;line-height:1.25;font-weight:600}
+.book small{color:var(--muted);font-size:.8rem}
+.bar{height:4px;background:var(--line);border-radius:2px;overflow:hidden}.bar i{display:block;height:100%;background:var(--accent)}
+.book .del{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.55);color:#fff;width:30px;height:30px;border-radius:50%;font-size:1rem}
+.empty{border:2px dashed var(--line);border-radius:14px;padding:28px;text-align:center;color:var(--muted);line-height:1.8}
+.continue{display:flex;gap:18px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;text-align:left;width:100%}
+.continue .cover{width:84px;flex:none;font-size:.8rem}
+.continue h2{font-family:var(--f-display);margin:2px 0 6px;font-size:1.5rem}
+.continue p{margin:0;color:var(--muted)}
+.continue .go{margin-left:auto;background:var(--accent);color:#fff;font-weight:700;padding:12px 18px;border-radius:12px;flex:none}
+.searchrow{display:flex;gap:10px}
+.searchrow input{flex:1;min-width:0;font:inherit;font-size:1.1rem;padding:14px 16px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);color:var(--ink)}
+.searchrow button{background:var(--ink);color:var(--paper);font-weight:700;padding:0 20px;border-radius:12px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.chip{padding:8px 14px;border-radius:20px;border:1px solid var(--line);background:var(--card);font-size:.9rem}
+.chip.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.note{color:var(--muted);font-size:.88rem;line-height:1.7;margin-top:10px}
+.note a{color:var(--accent)}
+.status{color:var(--muted);padding:20px 0}
+.dl{margin-top:4px;background:var(--accent);color:#fff;border-radius:10px;padding:9px 10px;font-weight:700;font-size:.9rem}
+.dl.done{background:var(--accent2)}
+.dl[disabled]{opacity:.6}
+.gutenberg{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-top:26px;line-height:1.7}
+.gutenberg h3{margin:0 0 4px;font-family:var(--f-display)}
+.tabs{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;gap:8px;padding:10px max(16px,env(safe-area-inset-right)) calc(10px + var(--safe-b)) max(16px,env(safe-area-inset-left));background:color-mix(in srgb,var(--paper) 88%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line);z-index:5}
+.tabs button{padding:10px 26px;border-radius:12px;font-weight:700;color:var(--muted)}
+.tabs button.on{background:var(--ink);color:var(--paper)}
+.toast{position:fixed;left:50%;top:calc(16px + var(--safe-t));transform:translate(-50%,-200%);background:var(--ink);color:var(--paper);padding:10px 18px;border-radius:12px;font-weight:700;z-index:50;transition:transform .25s;max-width:calc(100% - 32px)}
+.toast.show{transform:translate(-50%,0)}
+
+/* ---------- 閱讀器 ---------- */
+#reader{position:fixed;inset:0;z-index:20;--rbg:#FBF7EE;--rfg:#222;background:var(--rbg);color:var(--rfg)}
+#reader.sepia{--rbg:#F1E5CC;--rfg:#3B2F1E}#reader.dark{--rbg:#121212;--rfg:#D9D4CA}#reader.light{--rbg:#FFFFFF;--rfg:#1A1A1A}
+#viewer{position:absolute;top:calc(34px + var(--safe-t));bottom:calc(38px + var(--safe-b));left:var(--mx,40px);right:var(--mx,40px)}
+.zone{position:absolute;top:calc(34px + var(--safe-t));bottom:calc(38px + var(--safe-b));width:max(14%,56px);z-index:2}
+.zone.l{left:0}.zone.r{right:0}
+.rinfo{position:absolute;left:0;right:0;font-size:.78rem;color:color-mix(in srgb,var(--rfg) 50%,transparent);text-align:center;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 60px}
+.rinfo.t{top:calc(10px + var(--safe-t))}.rinfo.b{bottom:calc(12px + var(--safe-b))}
+.chrome{position:absolute;left:0;right:0;z-index:5;background:color-mix(in srgb,var(--rbg) 94%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);transition:transform .2s,opacity .2s}
+.chrome.top{top:0;padding:calc(8px + var(--safe-t)) 14px 8px;display:flex;align-items:center;gap:8px;border-bottom:1px solid color-mix(in srgb,var(--rfg) 12%,transparent)}
+.chrome.bot{bottom:0;padding:12px 18px calc(14px + var(--safe-b));border-top:1px solid color-mix(in srgb,var(--rfg) 12%,transparent)}
+#reader:not(.ui) .chrome.top{transform:translateY(-110%);opacity:0;pointer-events:none}
+#reader:not(.ui) .chrome.bot{transform:translateY(110%);opacity:0;pointer-events:none}
+.chrome .ttl{flex:1;min-width:0;text-align:center;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ib{padding:10px 12px;border-radius:10px;font-weight:700;min-width:44px;min-height:44px}
+.ib:hover{background:color-mix(in srgb,var(--rfg) 8%,transparent)}
+.scrub{display:flex;align-items:center;gap:12px}
+.scrub input{flex:1;accent-color:var(--accent)}
+.scrub span{font-variant-numeric:tabular-nums;font-size:.85rem;min-width:44px;text-align:right}
+.panel{position:absolute;z-index:6;right:12px;top:calc(64px + var(--safe-t));width:min(380px,calc(100% - 24px));max-height:calc(100% - 140px);overflow:auto;background:var(--rbg);color:var(--rfg);border:1px solid color-mix(in srgb,var(--rfg) 15%,transparent);border-radius:16px;box-shadow:0 20px 50px -20px rgba(0,0,0,.5);padding:16px}
+.panel.left{left:12px;right:auto}
+.panel h4{margin:14px 0 8px;font-size:.75rem;letter-spacing:.12em;opacity:.6}
+.panel h4:first-child{margin-top:0}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{flex:1;min-width:60px;padding:10px 8px;border-radius:10px;border:1.5px solid color-mix(in srgb,var(--rfg) 18%,transparent);font-size:.95rem}
+.seg button.on{border-color:var(--accent);color:var(--accent);font-weight:700}
+.sw{display:inline-block;width:18px;height:18px;border-radius:50%;vertical-align:-4px;margin-right:6px;border:1px solid rgba(0,0,0,.2)}
+.toc a{display:block;padding:10px 6px;border-bottom:1px solid color-mix(in srgb,var(--rfg) 10%,transparent);color:inherit;text-decoration:none}
+.toc a.sub{padding-left:22px;font-size:.92rem;opacity:.85}
+.toc a.cur{color:var(--accent);font-weight:700}
+.loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1rem;opacity:.7;z-index:1}
+@media (max-width:700px){.grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:20px 14px}.top h1{font-size:2rem}.continue .go{display:none}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="top"><h1>書櫃<span>Shelf</span></h1><button class="importbtn" id="importBtn">＋ 匯入 EPUB</button><input type="file" id="fileIn" accept=".epub,application/epub+zip" multiple hidden></div>
+
+  <section class="view" id="vShelf">
+    <div id="contWrap"></div>
+    <div class="sect">我的書</div>
+    <div class="grid" id="shelf"></div>
+    <div class="empty" id="shelfEmpty" hidden>書櫃還是空的。<br>到下面「找書」搜尋免費英文書，按「下載」就會放進這裡，沒網路也能讀。<br>也可以按右上角「匯入 EPUB」，打開你在 iPad「檔案」裡的書。</div>
+  </section>
+
+  <section class="view" id="vFind" hidden>
+    <form class="searchrow" id="sForm"><input id="sq" type="search" placeholder="書名或作者，例如 Sherlock、Austen" autocomplete="off" autocapitalize="off" enterkeyhint="search"><button>搜尋</button></form>
+    <div class="chips" id="sortChips">
+      <button class="chip on" data-sort="popularity">最熱門</button>
+      <button class="chip" data-sort="reading-ease">最好讀</button>
+      <button class="chip" data-sort="newest">最新上架</button>
+      <button class="chip" data-sort="length">篇幅短</button>
+    </div>
+    <p class="note">書源：<a href="https://standardebooks.org" target="_blank" rel="noopener">Standard Ebooks</a>，約一千多本排版精美的經典英文書，全部免費、合法（公版書）。按「下載」直接存進書櫃。</p>
+    <div id="results" class="grid" style="margin-top:18px"></div>
+    <div class="status" id="sStatus"></div>
+    <div class="gutenberg">
+      <h3>找不到？去 Project Gutenberg</h3>
+      Gutenberg 有 7 萬多本免費公版書，但它的檔案不能直接在這裡下載，要多兩步：
+      <ol style="margin:6px 0 0;padding-left:1.3em">
+        <li><a id="gLink" href="https://www.gutenberg.org/ebooks/search/?query=" target="_blank" rel="noopener">在 Gutenberg 搜尋這本書</a> → 點書 → 選「EPUB3」下載</li>
+        <li>回到這裡按右上角「匯入 EPUB」→ 到「檔案」的「下載項目」選它</li>
+      </ol>
+      自己買的書只要是沒有 DRM 鎖的 EPUB，也用同樣方式匯入。
+    </div>
+  </section>
+</div>
+
+<nav class="tabs"><button class="on" data-v="vShelf">書櫃</button><button data-v="vFind">找書</button></nav>
+
+<div id="reader" hidden>
+  <div class="rinfo t" id="rTitle"></div>
+  <div id="viewer"></div>
+  <div class="loading" id="rLoading">打開中…</div>
+  <button class="zone l" id="zl" aria-label="上一頁"></button>
+  <button class="zone r" id="zr" aria-label="下一頁"></button>
+  <div class="rinfo b" id="rPos"></div>
+  <div class="chrome top">
+    <button class="ib" id="rBack">‹ 書櫃</button>
+    <button class="ib" id="rToc">目錄</button>
+    <div class="ttl" id="rTtl"></div>
+    <button class="ib" id="rAa" style="font-family:Georgia,serif">Aa</button>
+  </div>
+  <div class="chrome bot">
+    <div class="scrub"><input type="range" id="rScrub" min="0" max="1000" value="0" aria-label="跳到位置"><span id="rPct">0%</span></div>
+  </div>
+  <div class="panel left toc" id="tocPanel" hidden></div>
+  <div class="panel" id="aaPanel" hidden>
+    <h4>字體大小</h4>
+    <div class="seg"><button id="fsDown" style="font-size:.9rem">A−</button><button id="fsVal" disabled style="opacity:1"></button><button id="fsUp" style="font-size:1.3rem">A+</button></div>
+    <h4>字型</h4>
+    <div class="seg" id="fontSeg">
+      <button data-f="Georgia, serif" style="font-family:Georgia">Georgia</button>
+      <button data-f="ui-serif, 'New York', 'Iowan Old Style', serif" style="font-family:ui-serif,'Iowan Old Style',serif">New York</button>
+      <button data-f="-apple-system, 'Helvetica Neue', sans-serif" style="font-family:-apple-system,sans-serif">San Francisco</button>
+      <button data-f="'Atkinson Hyperlegible', Verdana, sans-serif" style="font-family:Verdana">好辨識</button>
+    </div>
+    <h4>行距</h4>
+    <div class="seg" id="lhSeg"><button data-lh="1.4">緊</button><button data-lh="1.65">適中</button><button data-lh="1.9">寬</button></div>
+    <h4>頁邊</h4>
+    <div class="seg" id="mxSeg"><button data-mx="16">窄</button><button data-mx="40">適中</button><button data-mx="90">寬</button></div>
+    <h4>背景</h4>
+    <div class="seg" id="thSeg">
+      <button data-th="paper"><span class="sw" style="background:#FBF7EE"></span>米白</button>
+      <button data-th="light"><span class="sw" style="background:#fff"></span>白</button>
+      <button data-th="sepia"><span class="sw" style="background:#F1E5CC"></span>復古</button>
+      <button data-th="dark"><span class="sw" style="background:#121212"></span>夜間</button>
+    </div>
+    <h4>一次顯示</h4>
+    <div class="seg" id="spSeg"><button data-sp="auto">橫放兩頁</button><button data-sp="none">永遠一頁</button></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function toast(t,ms=2200){const e=$("toast");e.textContent=t;e.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove("show"),ms)}
+const SE="https://standardebooks.org";
+
+// ---------- IndexedDB ----------
+let DB;
+function db(){return DB||(DB=new Promise((res,rej)=>{const r=indexedDB.open("shelf",1);r.onupgradeneeded=()=>{r.result.createObjectStore("books",{keyPath:"id"});r.result.createObjectStore("files")};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}))}
+async function tx(store,mode,fn){const d=await db();return new Promise((res,rej)=>{const t=d.transaction(store,mode);const s=t.objectStore(store);const r=fn(s);t.oncomplete=()=>res(r&&r.result);t.onerror=()=>rej(t.error)})}
+const allBooks=()=>tx("books","readonly",s=>s.getAll());
+const getBook=id=>tx("books","readonly",s=>s.get(id));
+const putBook=b=>tx("books","readwrite",s=>s.put(b));
+const getFile=id=>tx("files","readonly",s=>s.get(id));
+const putFile=(id,blob)=>tx("files","readwrite",s=>s.put(blob,id));
+async function delBook(id){await tx("books","readwrite",s=>s.delete(id));await tx("files","readwrite",s=>s.delete(id))}
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+
+// ---------- 設定 ----------
+const PREF_KEY="shelf-prefs";
+let P={fs:21,font:"Georgia, serif",lh:1.65,mx:40,th:"paper",sp:"auto"};
+try{Object.assign(P,JSON.parse(localStorage.getItem(PREF_KEY)||"{}"))}catch(e){}
+const savePrefs=()=>{try{localStorage.setItem(PREF_KEY,JSON.stringify(P))}catch(e){}};
+
+// ---------- 加書 ----------
+async function addEpub(blob,meta){
+  const buf=await blob.arrayBuffer();
+  let title=meta.title,author=meta.author,cover=null;
+  try{const bk=ePub(buf);await bk.ready;const md=bk.packaging.metadata;title=title||md.title;author=author||md.creator;
+    const cu=await bk.coverUrl();if(cu){const cb=await (await fetch(cu)).blob();cover=await blobToDataUrl(await shrink(cb))}bk.destroy()}catch(e){console.warn("meta",e)}
+  const id=meta.id||("imp-"+(title||"book").toLowerCase().replace(/[^a-z0-9]+/g,"-").slice(0,40)+"-"+blob.size);
+  const old=await getBook(id);
+  await putFile(id,new Blob([buf],{type:"application/epub+zip"}));
+  await putBook(Object.assign({id,title:title||"Untitled",author:author||"",cover,source:meta.source||"import",added:Date.now(),lastRead:0,cfi:null,pct:0,locations:null},old||{},{cover:cover||(old&&old.cover)}));
+  return id;
+}
+function blobToDataUrl(b){return new Promise(r=>{const f=new FileReader();f.onload=()=>r(f.result);f.readAsDataURL(b)})}
+async function shrink(blob){try{const bmp=await createImageBitmap(blob);const w=300,h=Math.round(bmp.height*w/bmp.width);const c=document.createElement("canvas");c.width=w;c.height=h;c.getContext("2d").drawImage(bmp,0,0,w,h);return await new Promise(r=>c.toBlob(r,"image/jpeg",.82))}catch(e){return blob}}
+
+$("importBtn").onclick=()=>$("fileIn").click();
+$("fileIn").onchange=async e=>{const fs=[...e.target.files];e.target.value="";if(!fs.length)return;toast(`匯入 ${fs.length} 本中…`,8000);let n=0;
+  for(const f of fs){try{await addEpub(f,{source:"import"});n++}catch(err){toast(`「${f.name}」打不開，可能不是 EPUB 或有 DRM 鎖`,4000)}}
+  if(n){toast(`已匯入 ${n} 本`);showView("vShelf")}};
+
+// ---------- 書櫃 ----------
+async function renderShelf(){
+  const books=(await allBooks()).sort((a,b)=>(b.lastRead||b.added)-(a.lastRead||a.added));
+  $("shelfEmpty").hidden=books.length>0;
+  const cur=books.find(b=>b.lastRead);
+  $("contWrap").innerHTML=cur?`<div class="sect">繼續讀</div><button class="continue" data-open="${esc(cur.id)}">${coverHTML(cur)}<div style="min-width:0"><p>${esc(cur.author)}</p><h2>${esc(cur.title)}</h2><p>讀到 ${Math.round((cur.pct||0)*100)}%・${ago(cur.lastRead)}</p></div><span class="go">繼續讀 →</span></button>`:"";
+  $("shelf").innerHTML=books.map(b=>`<div class="book"><button data-open="${esc(b.id)}" style="text-align:left;display:flex;flex-direction:column;gap:8px">${coverHTML(b)}<b>${esc(b.title)}</b><small>${esc(b.author)}</small><div class="bar"><i style="width:${Math.round((b.pct||0)*100)}%"></i></div><small>${b.lastRead?Math.round((b.pct||0)*100)+"%":"還沒開始"}</small></button><button class="del" data-del="${esc(b.id)}" aria-label="從書櫃移除">×</button></div>`).join("");
+}
+function coverHTML(b){return b.cover?`<div class="cover" style="background-image:url('${b.cover}')"></div>`:`<div class="cover noimg">${esc(b.title)}</div>`}
+function ago(t){const m=Math.round((Date.now()-t)/60000);if(m<1)return"剛剛";if(m<60)return m+" 分鐘前";const h=Math.round(m/60);if(h<24)return h+" 小時前";return Math.round(h/24)+" 天前"}
+let delArm={};
+document.addEventListener("click",async e=>{
+  const o=e.target.closest("[data-open]");if(o){openBook(o.dataset.open);return}
+  const d=e.target.closest("[data-del]");if(d){const id=d.dataset.del;if(delArm[id]&&Date.now()-delArm[id]<3000){await delBook(id);toast("已從書櫃移除");renderShelf()}else{delArm[id]=Date.now();toast("再按一次 × 移除這本書")}}
+});
+
+// ---------- 分頁 ----------
+function showView(v){document.querySelectorAll(".view").forEach(x=>x.hidden=x.id!==v);document.querySelectorAll(".tabs button").forEach(b=>b.classList.toggle("on",b.dataset.v===v));if(v==="vShelf")renderShelf();if(v==="vFind"&&!$("results").children.length)search();window.scrollTo(0,0)}
+document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>showView(b.dataset.v));
+
+// ---------- 找書：Standard Ebooks ----------
+let sort="popularity",searching=0;
+document.querySelectorAll("#sortChips .chip").forEach(c=>c.onclick=()=>{sort=c.dataset.sort;document.querySelectorAll("#sortChips .chip").forEach(x=>x.classList.toggle("on",x===c));search()});
+$("sForm").onsubmit=e=>{e.preventDefault();$("sq").blur();search()};
+$("sq").oninput=()=>{$("gLink").href="https://www.gutenberg.org/ebooks/search/?query="+encodeURIComponent($("sq").value.trim())};
+async function search(){
+  const q=$("sq").value.trim();const my=++searching;
+  $("sStatus").textContent="搜尋中…";$("results").innerHTML="";
+  try{
+    const r=await fetch(`${SE}/ebooks?query=${encodeURIComponent(q)}&sort=${sort}&per-page=48`);
+    if(!r.ok)throw new Error(r.status);
+    const doc=new DOMParser().parseFromString(await r.text(),"text/html");
+    if(my!==searching)return;
+    const have=new Set((await allBooks()).map(b=>b.id));
+    const items=[...doc.querySelectorAll('li[typeof="schema:Book"]')].map(li=>{const path=li.getAttribute("about");const img=li.querySelector("img");
+      return{path,title:li.querySelector('p > a [property="schema:name"]')?.textContent||"",author:[...li.querySelectorAll('.author [property="schema:name"]')].map(x=>x.textContent).join(", "),img:img?SE+img.getAttribute("src"):null}});
+    $("sStatus").textContent=items.length?"":(q?`Standard Ebooks 沒有「${q}」。試試下面的 Gutenberg。`:"沒有結果");
+    $("results").innerHTML=items.map(it=>{const id="se:"+it.path;const got=have.has(id);
+      return`<div class="book">${it.img?`<div class="cover" style="background-image:url('${esc(it.img)}')"></div>`:`<div class="cover noimg">${esc(it.title)}</div>`}<b>${esc(it.title)}</b><small>${esc(it.author)}</small>
+      <button class="dl ${got?"done":""}" data-dl="${esc(it.path)}" data-t="${esc(it.title)}" data-a="${esc(it.author)}">${got?"已在書櫃・打開":"下載"}</button></div>`}).join("");
+  }catch(err){if(my===searching)$("sStatus").textContent="連不到書源，確認網路後再試一次。"}
+}
+$("results").addEventListener("click",async e=>{
+  const b=e.target.closest("[data-dl]");if(!b)return;const path=b.dataset.dl,id="se:"+path;
+  if(b.classList.contains("done")){openBook(id);return}
+  b.disabled=true;b.textContent="下載中…";
+  try{
+    const page=await (await fetch(SE+path)).text();
+    const m=[...page.matchAll(/href="([^"]+?\/downloads\/[^"]+?\.epub)"/g)].map(x=>x[1]).find(h=>!/kepub|advanced/.test(h));
+    if(!m)throw new Error("no epub link");
+    const r=await fetch(SE+m.replace(/&amp;/g,"&")+"?source=download");
+    if(!r.ok||!/epub|zip|octet/.test(r.headers.get("content-type")||""))throw new Error("bad file");
+    await addEpub(await r.blob(),{id,title:b.dataset.t,author:b.dataset.a,source:"standardebooks"});
+    b.disabled=false;b.classList.add("done");b.textContent="已在書櫃・打開";toast(`《${b.dataset.t}》已放進書櫃`);
+  }catch(err){console.warn(err);b.disabled=false;b.textContent="下載失敗，再試一次"}
+});
+
+// ---------- 閱讀器 ----------
+let R=null; // {book, rendition, rec}
+async function openBook(id){
+  const rec=await getBook(id);const blob=await getFile(id);if(!rec||!blob){toast("找不到這本書的檔案");return}
+  const el=$("reader");el.hidden=false;el.classList.remove("ui");$("rLoading").hidden=false;
+  $("rTitle").textContent=rec.title;$("rTtl").textContent=rec.title;$("rPos").textContent="";
+  applyChromeTheme();document.documentElement.style.overflow="hidden";
+  const book=ePub(await blob.arrayBuffer());
+  const rendition=book.renderTo("viewer",{width:"100%",height:"100%",flow:"paginated",spread:P.sp,minSpreadWidth:900,allowScriptedContent:false});
+  R={book,rendition,rec,id};
+  registerThemes(rendition);applyPrefs(false);
+  rendition.hooks.content.register(c=>wireContent(c));
+  rendition.on("relocated",onRelocated);
+  rendition.on("keyup",onKey);
+  try{await rendition.display(rec.cfi||undefined)}catch(e){await rendition.display()}
+  $("rLoading").hidden=true;
+  rec.lastRead=Date.now();await putBook(rec);
+  book.loaded.navigation.then(nav=>{R&&(R.toc=nav.toc);buildToc()});
+  // 位置索引（算百分比用），算過就存起來
+  book.ready.then(async()=>{if(rec.locations){book.locations.load(rec.locations)}else{await book.locations.generate(1200);if(!R||R.book!==book)return;rec.locations=book.locations.save();await putBook(rec)}
+    const loc=rendition.currentLocation();if(loc&&loc.start)onRelocated(loc)});
+}
+function registerThemes(r){
+  const T={paper:["#FBF7EE","#222"],light:["#FFFFFF","#1A1A1A"],sepia:["#F1E5CC","#3B2F1E"],dark:["#121212","#D9D4CA"]};
+  for(const[k,[bg,fg]]of Object.entries(T))r.themes.register(k,{"body":{"background":bg+" !important","color":fg+" !important"},"a":{"color":(k==="dark"?"#E0A070":"#9A4A22")+" !important"},"p":{"text-align":"justify","hyphens":"auto","-webkit-hyphens":"auto"}});
+}
+function applyChromeTheme(){const el=$("reader");el.className=el.className.replace(/\b(paper|light|sepia|dark)\b/g,"").trim();el.classList.add(P.th==="paper"?"paperx":P.th);document.querySelector('meta[name=theme-color]').content={paper:"#FBF7EE",light:"#FFFFFF",sepia:"#F1E5CC",dark:"#121212"}[P.th]}
+function applyPrefs(resize=true){
+  if(!R)return;const r=R.rendition;
+  r.themes.select(P.th);r.themes.fontSize(P.fs+"px");r.themes.font(P.font);r.themes.override("line-height",String(P.lh));
+  $("reader").style.setProperty("--mx",P.mx+"px");applyChromeTheme();
+  $("fsVal").textContent=P.fs+"px";
+  document.querySelectorAll("#fontSeg button").forEach(b=>b.classList.toggle("on",b.dataset.f===P.font));
+  document.querySelectorAll("#lhSeg button").forEach(b=>b.classList.toggle("on",+b.dataset.lh===P.lh));
+  document.querySelectorAll("#mxSeg button").forEach(b=>b.classList.toggle("on",+b.dataset.mx===P.mx));
+  document.querySelectorAll("#thSeg button").forEach(b=>b.classList.toggle("on",b.dataset.th===P.th));
+  document.querySelectorAll("#spSeg button").forEach(b=>b.classList.toggle("on",b.dataset.sp===P.sp));
+  if(resize){const loc=r.currentLocation();const cfi=loc&&loc.start&&loc.start.cfi;setTimeout(()=>{r.resize();if(cfi)r.display(cfi)},30)}
+}
+function onRelocated(loc){
+  if(!R||!loc||!loc.start)return;const rec=R.rec;
+  rec.cfi=loc.start.cfi;rec.lastRead=Date.now();
+  const L=R.book.locations;let pct=rec.pct||0;
+  if(L&&L.length&&L.length()){pct=L.percentageFromCfi(loc.start.cfi)||0}
+  if(loc.atEnd)pct=1;rec.pct=pct;
+  const d=loc.start.displayed||{};const ch=chapterName(loc.start.href);
+  $("rPos").textContent=`${ch?ch+"・":""}${d.total?"本章 "+d.page+"/"+d.total+" 頁・":""}${Math.round(pct*100)}%`;
+  $("rPct").textContent=Math.round(pct*100)+"%";if(!scrubbing)$("rScrub").value=Math.round(pct*1000);
+  clearTimeout(onRelocated.t);onRelocated.t=setTimeout(()=>putBook(rec),400);
+  markToc(loc.start.href);
+}
+function chapterName(href){if(!R||!R.toc)return"";const base=(href||"").split("#")[0];let best="";const walk=a=>a.forEach(t=>{if(t.href&&t.href.split("#")[0].endsWith(base.split("/").pop()))best=best||t.label.trim();t.subitems&&walk(t.subitems)});walk(R.toc);return best}
+function buildToc(){if(!R||!R.toc)return;let h="";const walk=(a,dep)=>a.forEach(t=>{h+=`<a href="#" class="${dep?"sub":""}" data-href="${esc(t.href)}">${esc(t.label.trim())}</a>`;t.subitems&&dep<1&&walk(t.subitems,dep+1)});walk(R.toc,0);$("tocPanel").innerHTML=h||"<p>這本書沒有目錄</p>"}
+function markToc(href){const base=(href||"").split("#")[0].split("/").pop();let first=null;document.querySelectorAll("#tocPanel a").forEach(a=>{const on=!first&&a.dataset.href.split("#")[0].split("/").pop()===base;if(on)first=a;a.classList.toggle("cur",on)})}
+$("tocPanel").addEventListener("click",e=>{const a=e.target.closest("[data-href]");if(!a)return;e.preventDefault();R.rendition.display(a.dataset.href);closePanels();$("reader").classList.remove("ui")});
+
+// 翻頁：點左右邊、左右滑、鍵盤
+const next=()=>R&&R.rendition.next(),prev=()=>R&&R.rendition.prev();
+$("zl").onclick=()=>{closePanels();prev()};$("zr").onclick=()=>{closePanels();next()};
+function onKey(e){if(e.key==="ArrowRight"||e.key===" "||e.key==="PageDown")next();else if(e.key==="ArrowLeft"||e.key==="PageUp")prev()}
+document.addEventListener("keydown",e=>{if(!R||$("reader").hidden||e.target.tagName==="INPUT")return;if(e.key==="Escape"){closeReader();return}onKey(e)});
+function wireContent(c){
+  const doc=c.document;let sx=0,sy=0,st=0;
+  doc.addEventListener("touchstart",e=>{const t=e.changedTouches[0];sx=t.screenX;sy=t.screenY;st=Date.now()},{passive:true});
+  doc.addEventListener("touchend",e=>{const t=e.changedTouches[0];const dx=t.screenX-sx,dy=t.screenY-sy;
+    if(Math.abs(dx)>40&&Math.abs(dx)>Math.abs(dy)*1.3&&Date.now()-st<800){if(hasSel(doc))return;dx<0?next():prev()}},{passive:true});
+  doc.addEventListener("click",e=>{if(e.target.closest("a")||hasSel(doc))return;togglUI()});
+  doc.addEventListener("keydown",onKey);
+}
+const hasSel=d=>{const s=d.getSelection&&d.getSelection();return s&&String(s).trim().length>0};
+function togglUI(){const el=$("reader");if(!$("aaPanel").hidden||!$("tocPanel").hidden){closePanels();return}el.classList.toggle("ui")}
+function closePanels(){$("aaPanel").hidden=true;$("tocPanel").hidden=true}
+$("rToc").onclick=()=>{$("aaPanel").hidden=true;$("tocPanel").hidden=!$("tocPanel").hidden};
+$("rAa").onclick=()=>{$("tocPanel").hidden=true;$("aaPanel").hidden=!$("aaPanel").hidden};
+$("fsDown").onclick=()=>{P.fs=Math.max(14,P.fs-1);savePrefs();applyPrefs()};
+$("fsUp").onclick=()=>{P.fs=Math.min(40,P.fs+1);savePrefs();applyPrefs()};
+document.querySelectorAll("#fontSeg button").forEach(b=>b.onclick=()=>{P.font=b.dataset.f;savePrefs();applyPrefs()});
+document.querySelectorAll("#lhSeg button").forEach(b=>b.onclick=()=>{P.lh=+b.dataset.lh;savePrefs();applyPrefs()});
+document.querySelectorAll("#mxSeg button").forEach(b=>b.onclick=()=>{P.mx=+b.dataset.mx;savePrefs();applyPrefs()});
+document.querySelectorAll("#thSeg button").forEach(b=>b.onclick=()=>{P.th=b.dataset.th;savePrefs();applyPrefs(false)});
+document.querySelectorAll("#spSeg button").forEach(b=>b.onclick=()=>{P.sp=b.dataset.sp;savePrefs();if(R){R.rendition.spread(P.sp,900);applyPrefs()}});
+let scrubbing=false;
+$("rScrub").oninput=e=>{scrubbing=true;$("rPct").textContent=Math.round(e.target.value/10)+"%"};
+$("rScrub").onchange=e=>{scrubbing=false;if(!R)return;const L=R.book.locations;if(L&&L.length&&L.length()){R.rendition.display(L.cfiFromPercentage(e.target.value/1000))}else toast("還在計算全書頁數，等幾秒再拉")};
+$("rBack").onclick=closeReader;
+async function closeReader(){if(!R)return;clearTimeout(onRelocated.t);await putBook(R.rec);try{R.book.destroy()}catch(e){}R=null;$("viewer").innerHTML="";$("reader").hidden=true;closePanels();document.documentElement.style.overflow="";document.querySelector('meta[name=theme-color]').content="#F6F1E7";renderShelf()}
+window.addEventListener("resize",()=>{if(R){clearTimeout(window.__rz);window.__rz=setTimeout(()=>{const loc=R.rendition.currentLocation();R.rendition.resize();loc&&loc.start&&R.rendition.display(loc.start.cfi)},200)}});
+document.addEventListener("visibilitychange",()=>{if(document.hidden&&R)putBook(R.rec)});
+
+// ---------- 啟動 ----------
+if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js").catch(()=>{});
+renderShelf();
+</script>
+</body>
+</html>
