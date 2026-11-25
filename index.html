@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="書櫃">
+<meta name="apple-mobile-web-app-title" content="Shelf">
 <meta name="theme-color" content="#F6F1E7">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-512.png">
@@ -18,33 +18,41 @@
 <style>
 /* Layout: library of covers on a warm paper ground; reader is full-bleed paper with hidden chrome that appears on a centre tap. */
 :root{
-  --paper:#F6F1E7; --card:#FFFDF8; --ink:#1F1A14; --muted:#7A6F60; --line:#E3DACA; --accent:#B4532A; --accent2:#2F5D50;
+  --paper:#F6F1E7; --card:#FFFDF8; --ink:#1F1A14; --muted:#7A6F60; --line:#E3DACA; --accent:#B4532A; --accent2:#2F5D50; --hl:#F3D27A;
+  --easy:#2E7D4F; --mid:#B7791F; --hard:#B4432A;
   --f-display:"Fraunces",Georgia,"Times New Roman",serif;
-  --f-ui:"Noto Sans TC",-apple-system,system-ui,sans-serif;
+  --f-ui:"Noto Sans TC",-apple-system,"Hiragino Sans",system-ui,sans-serif;
   --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
 }
-@media (prefers-color-scheme: dark){:root{--paper:#17140F;--card:#221E18;--ink:#EDE6D9;--muted:#A0968A;--line:#3A332A;--accent:#E07A4C;--accent2:#7FB8A6;color-scheme:dark}}
+@media (prefers-color-scheme: dark){:root{--paper:#17140F;--card:#221E18;--ink:#EDE6D9;--muted:#A0968A;--line:#3A332A;--accent:#E07A4C;--accent2:#7FB8A6;--easy:#5CC48A;--mid:#E0AE4C;--hard:#E77B62;color-scheme:dark}}
+html[lang="ja"]{--f-ui:"Hiragino Sans","Noto Sans JP",-apple-system,system-ui,sans-serif}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:var(--paper);color:var(--ink);font-family:var(--f-ui);-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
-button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 [hidden]{display:none!important}
 
-/* ---------- 書櫃 / 搜尋 ---------- */
 #app{min-height:100%;padding:calc(18px + var(--safe-t)) max(20px,env(safe-area-inset-right)) calc(90px + var(--safe-b)) max(20px,env(safe-area-inset-left))}
-.top{display:flex;align-items:baseline;justify-content:space-between;gap:12px;max-width:1100px;margin:0 auto}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;max-width:1100px;margin:0 auto;flex-wrap:wrap}
 .top h1{font-family:var(--f-display);font-size:2.4rem;margin:0;letter-spacing:-.01em}
 .top h1 span{font-family:var(--f-ui);font-size:1rem;color:var(--muted);font-weight:500;margin-left:8px}
+.topr{display:flex;gap:10px;align-items:center}
+.langsel{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 10px}
 .importbtn{color:var(--accent);font-weight:700;padding:10px 14px;border-radius:10px;border:1.5px solid var(--accent)}
 .view{max-width:1100px;margin:18px auto 0}
 .sect{font-size:.8rem;letter-spacing:.14em;color:var(--muted);font-weight:700;margin:26px 0 12px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:26px 20px}
 .book{display:flex;flex-direction:column;gap:8px;text-align:left;position:relative}
+.book>button:first-child{text-align:left;display:flex;flex-direction:column;gap:8px}
 .cover{aspect-ratio:2/3;width:100%;border-radius:4px 8px 8px 4px;background:var(--line) center/cover no-repeat;box-shadow:0 1px 0 rgba(0,0,0,.08),0 10px 24px -12px rgba(0,0,0,.45);position:relative;overflow:hidden;display:flex;align-items:flex-end;padding:12px;color:#fff;font-family:var(--f-display);font-size:1.05rem;line-height:1.2}
 .cover.noimg{background:linear-gradient(160deg,var(--accent2),#1d3a32)}
+.cover.noimg.g{background:linear-gradient(160deg,#5B4B8A,#2C2347)}
 .cover::after{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:linear-gradient(90deg,rgba(0,0,0,.25),transparent)}
 .book b{font-family:var(--f-display);font-size:1rem;line-height:1.25;font-weight:600}
 .book small{color:var(--muted);font-size:.8rem}
+.meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.pill{font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:20px;border:1.5px solid currentColor;white-space:nowrap}
+.pill.e{color:var(--easy)}.pill.m1{color:var(--accent2)}.pill.m{color:var(--mid)}.pill.h{color:var(--hard)}.pill.src{color:var(--muted);border-width:1px;font-weight:500}
 .bar{height:4px;background:var(--line);border-radius:2px;overflow:hidden}.bar i{display:block;height:100%;background:var(--accent)}
 .book .del{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.55);color:#fff;width:30px;height:30px;border-radius:50%;font-size:1rem}
 .empty{border:2px dashed var(--line);border-radius:14px;padding:28px;text-align:center;color:var(--muted);line-height:1.8}
@@ -56,28 +64,53 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
 .searchrow{display:flex;gap:10px}
 .searchrow input{flex:1;min-width:0;font:inherit;font-size:1.1rem;padding:14px 16px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);color:var(--ink)}
 .searchrow button{background:var(--ink);color:var(--paper);font-weight:700;padding:0 20px;border-radius:12px}
-.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.filters{display:flex;gap:18px;flex-wrap:wrap;margin-top:14px;align-items:center}
+.filters .lab{font-size:.78rem;color:var(--muted);font-weight:700;letter-spacing:.08em}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
 .chip{padding:8px 14px;border-radius:20px;border:1px solid var(--line);background:var(--card);font-size:.9rem}
 .chip.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
-.note{color:var(--muted);font-size:.88rem;line-height:1.7;margin-top:10px}
+.note{color:var(--muted);font-size:.86rem;line-height:1.7;margin-top:10px}
 .note a{color:var(--accent)}
 .status{color:var(--muted);padding:20px 0}
 .dl{margin-top:4px;background:var(--accent);color:#fff;border-radius:10px;padding:9px 10px;font-weight:700;font-size:.9rem}
 .dl.done{background:var(--accent2)}
 .dl[disabled]{opacity:.6}
-.gutenberg{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-top:26px;line-height:1.7}
-.gutenberg h3{margin:0 0 4px;font-family:var(--f-display)}
 .tabs{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;gap:8px;padding:10px max(16px,env(safe-area-inset-right)) calc(10px + var(--safe-b)) max(16px,env(safe-area-inset-left));background:color-mix(in srgb,var(--paper) 88%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line);z-index:5}
-.tabs button{padding:10px 26px;border-radius:12px;font-weight:700;color:var(--muted)}
+.tabs button{padding:10px 22px;border-radius:12px;font-weight:700;color:var(--muted);position:relative}
 .tabs button.on{background:var(--ink);color:var(--paper)}
-.toast{position:fixed;left:50%;top:calc(16px + var(--safe-t));transform:translate(-50%,-200%);background:var(--ink);color:var(--paper);padding:10px 18px;border-radius:12px;font-weight:700;z-index:50;transition:transform .25s;max-width:calc(100% - 32px)}
+.badge{position:absolute;top:2px;right:4px;background:var(--accent);color:#fff;font-size:.68rem;min-width:18px;height:18px;border-radius:9px;padding:0 5px;display:flex;align-items:center;justify-content:center}
+.toast{position:fixed;left:50%;top:calc(16px + var(--safe-t));transform:translate(-50%,-200%);background:var(--ink);color:var(--paper);padding:10px 18px;border-radius:12px;font-weight:700;z-index:60;transition:transform .25s;max-width:calc(100% - 32px)}
 .toast.show{transform:translate(-50%,0)}
 
-/* ---------- 閱讀器 ---------- */
+/* 生字本 */
+.wtools{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.review{background:var(--accent);color:#fff;font-weight:700;padding:12px 20px;border-radius:12px}
+.review[disabled]{opacity:.45}
+.wlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-top:16px}
+.wcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.wcard .wh{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.wcard .w{font-family:var(--f-display);font-size:1.35rem;font-weight:700}
+.wcard .ph{color:var(--muted);font-size:.85rem}
+.wcard .tr{font-weight:700}
+.wcard .sen{color:var(--muted);font-size:.9rem;line-height:1.55;font-family:Georgia,serif}
+.wcard .sen mark{background:var(--hl);color:#1F1A14;border-radius:3px;padding:0 2px}
+.wcard .wf{display:flex;gap:8px;align-items:center;font-size:.78rem;color:var(--muted);flex-wrap:wrap}
+.wcard .wf button{color:var(--accent);font-weight:700;padding:4px 6px}
+.lvl{display:inline-flex;gap:2px}.lvl i{width:8px;height:8px;border-radius:2px;background:var(--line)}.lvl i.on{background:var(--easy)}
+.flash{max-width:560px;margin:10px auto 0;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:30px 24px;text-align:center;min-height:320px;display:flex;flex-direction:column;gap:14px;justify-content:center}
+.flash .w{font-family:var(--f-display);font-size:2.4rem;font-weight:700}
+.flash .sen{font-family:Georgia,serif;color:var(--muted);line-height:1.6}
+.flash .sen mark{background:var(--hl);color:#1F1A14;border-radius:3px;padding:0 2px}
+.flash .ans{font-size:1.3rem;font-weight:700}
+.flash .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.btn{font-weight:700;padding:13px 22px;border-radius:12px;background:var(--ink);color:var(--paper)}
+.btn.ok{background:var(--easy);color:#fff}.btn.no{background:var(--hard);color:#fff}.btn.ghost{background:var(--line);color:var(--ink)}
+
+/* 閱讀器 */
 #reader{position:fixed;inset:0;z-index:20;--rbg:#FBF7EE;--rfg:#222;background:var(--rbg);color:var(--rfg)}
 #reader.sepia{--rbg:#F1E5CC;--rfg:#3B2F1E}#reader.dark{--rbg:#121212;--rfg:#D9D4CA}#reader.light{--rbg:#FFFFFF;--rfg:#1A1A1A}
 #viewer{position:absolute;top:calc(34px + var(--safe-t));bottom:calc(38px + var(--safe-b));left:var(--mx,40px);right:var(--mx,40px)}
-.zone{position:absolute;top:calc(34px + var(--safe-t));bottom:calc(38px + var(--safe-b));width:max(14%,56px);z-index:2}
+.zone{position:absolute;top:calc(34px + var(--safe-t));bottom:calc(38px + var(--safe-b));width:min(9%,64px);z-index:2}
 .zone.l{left:0}.zone.r{right:0}
 .rinfo{position:absolute;left:0;right:0;font-size:.78rem;color:color-mix(in srgb,var(--rfg) 50%,transparent);text-align:center;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 60px}
 .rinfo.t{top:calc(10px + var(--safe-t))}.rinfo.b{bottom:calc(12px + var(--safe-b))}
@@ -104,198 +137,410 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
 .toc a.sub{padding-left:22px;font-size:.92rem;opacity:.85}
 .toc a.cur{color:var(--accent);font-weight:700}
 .loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1rem;opacity:.7;z-index:1}
-@media (max-width:700px){.grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:20px 14px}.top h1{font-size:2rem}.continue .go{display:none}}
+
+/* 查字卡 */
+.pop{position:absolute;z-index:8;width:min(360px,calc(100% - 24px));background:var(--rbg);color:var(--rfg);border:1px solid color-mix(in srgb,var(--rfg) 18%,transparent);border-radius:16px;box-shadow:0 18px 50px -16px rgba(0,0,0,.55);padding:14px 16px;max-height:60%;overflow:auto}
+.pop .ph{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.pop .w{font-family:Georgia,serif;font-size:1.5rem;font-weight:700}
+.pop .ipa{opacity:.6;font-size:.9rem}
+.pop .tr{font-size:1.15rem;font-weight:700;margin:6px 0 4px}
+.pop .alt{font-size:.88rem;opacity:.8;line-height:1.55}
+.pop .alt b{opacity:.65;font-weight:500;margin-right:4px}
+.pop .def{font-size:.88rem;line-height:1.5;margin-top:6px;opacity:.85;font-family:Georgia,serif}
+.pop .sent{margin-top:10px;padding-top:10px;border-top:1px solid color-mix(in srgb,var(--rfg) 12%,transparent);font-size:.88rem;line-height:1.55}
+.pop .acts{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.pop .acts button{padding:8px 12px;border-radius:10px;border:1.5px solid color-mix(in srgb,var(--rfg) 18%,transparent);font-weight:700;font-size:.88rem}
+.pop .acts .saved{border-color:var(--accent);color:var(--accent)}
+.selbtn{position:absolute;z-index:8;background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:12px;font-weight:700;box-shadow:0 10px 30px -10px rgba(0,0,0,.5)}
+@media (max-width:700px){.grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:20px 14px}.top h1{font-size:2rem}.continue .go{display:none}.tabs button{padding:10px 14px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
 <div id="app">
-  <div class="top"><h1>書櫃<span>Shelf</span></h1><button class="importbtn" id="importBtn">＋ 匯入 EPUB</button><input type="file" id="fileIn" accept=".epub,application/epub+zip" multiple hidden></div>
+  <div class="top"><h1 data-t="appName">書櫃<span>Shelf</span></h1>
+    <div class="topr"><select class="langsel" id="uiLang" aria-label="Language"><option value="zh">繁體中文</option><option value="ja">日本語</option><option value="en">English</option></select>
+    <button class="importbtn" id="importBtn" data-t="import"></button><input type="file" id="fileIn" accept=".epub,.pdf,application/epub+zip,application/pdf" multiple hidden></div></div>
 
   <section class="view" id="vShelf">
     <div id="contWrap"></div>
-    <div class="sect">我的書</div>
+    <div class="sect" data-t="myBooks"></div>
     <div class="grid" id="shelf"></div>
-    <div class="empty" id="shelfEmpty" hidden>書櫃還是空的。<br>到下面「找書」搜尋免費英文書，按「下載」就會放進這裡，沒網路也能讀。<br>也可以按右上角「匯入 EPUB」，打開你在 iPad「檔案」裡的書。</div>
+    <div class="empty" id="shelfEmpty" hidden data-t="shelfEmpty"></div>
   </section>
 
   <section class="view" id="vFind" hidden>
-    <form class="searchrow" id="sForm"><input id="sq" type="search" placeholder="書名或作者，例如 Sherlock、Austen" autocomplete="off" autocapitalize="off" enterkeyhint="search"><button>搜尋</button></form>
-    <div class="chips" id="sortChips">
-      <button class="chip on" data-sort="popularity">最熱門</button>
-      <button class="chip" data-sort="reading-ease">最好讀</button>
-      <button class="chip" data-sort="newest">最新上架</button>
-      <button class="chip" data-sort="length">篇幅短</button>
+    <form class="searchrow" id="sForm"><input id="sq" type="search" autocomplete="off" autocapitalize="off" enterkeyhint="search"><button data-t="search"></button></form>
+    <div class="filters">
+      <span class="lab" data-t="level"></span>
+      <div class="chips" id="lvChips"><button class="chip on" data-lv="all"></button><button class="chip" data-lv="e"></button><button class="chip" data-lv="m1"></button><button class="chip" data-lv="m"></button><button class="chip" data-lv="h"></button></div>
+      <span class="lab" data-t="source"></span>
+      <div class="chips" id="srcChips"><button class="chip on" data-src="all"></button><button class="chip" data-src="se">Standard Ebooks</button><button class="chip" data-src="pg">Gutenberg</button></div>
     </div>
-    <p class="note">書源：<a href="https://standardebooks.org" target="_blank" rel="noopener">Standard Ebooks</a>，約一千多本排版精美的經典英文書，全部免費、合法（公版書）。按「下載」直接存進書櫃。</p>
+    <p class="note" id="srcNote"></p>
     <div id="results" class="grid" style="margin-top:18px"></div>
     <div class="status" id="sStatus"></div>
-    <div class="gutenberg">
-      <h3>找不到？去 Project Gutenberg</h3>
-      Gutenberg 有 7 萬多本免費公版書，但它的檔案不能直接在這裡下載，要多兩步：
-      <ol style="margin:6px 0 0;padding-left:1.3em">
-        <li><a id="gLink" href="https://www.gutenberg.org/ebooks/search/?query=" target="_blank" rel="noopener">在 Gutenberg 搜尋這本書</a> → 點書 → 選「EPUB3」下載</li>
-        <li>回到這裡按右上角「匯入 EPUB」→ 到「檔案」的「下載項目」選它</li>
-      </ol>
-      自己買的書只要是沒有 DRM 鎖的 EPUB，也用同樣方式匯入。
-    </div>
+  </section>
+
+  <section class="view" id="vWords" hidden>
+    <div class="wtools"><div class="chips" id="wlChips"><button class="chip on" data-wl="all"></button><button class="chip" data-wl="new"></button><button class="chip" data-wl="known"></button></div>
+      <button class="review" id="reviewBtn"></button></div>
+    <div id="flash" hidden></div>
+    <div class="wlist" id="wlist"></div>
+    <div class="empty" id="wordsEmpty" hidden data-t="wordsEmpty"></div>
   </section>
 </div>
 
-<nav class="tabs"><button class="on" data-v="vShelf">書櫃</button><button data-v="vFind">找書</button></nav>
+<nav class="tabs"><button class="on" data-v="vShelf" data-t="tabShelf"></button><button data-v="vFind" data-t="tabFind"></button><button data-v="vWords"><span data-t="tabWords"></span><span class="badge" id="dueBadge" hidden></span></button></nav>
 
 <div id="reader" hidden>
   <div class="rinfo t" id="rTitle"></div>
   <div id="viewer"></div>
-  <div class="loading" id="rLoading">打開中…</div>
-  <button class="zone l" id="zl" aria-label="上一頁"></button>
-  <button class="zone r" id="zr" aria-label="下一頁"></button>
+  <div class="loading" id="rLoading"></div>
+  <button class="zone l" id="zl"></button>
+  <button class="zone r" id="zr"></button>
   <div class="rinfo b" id="rPos"></div>
   <div class="chrome top">
-    <button class="ib" id="rBack">‹ 書櫃</button>
-    <button class="ib" id="rToc">目錄</button>
+    <button class="ib" id="rBack"></button>
+    <button class="ib" id="rToc" data-t="toc"></button>
     <div class="ttl" id="rTtl"></div>
     <button class="ib" id="rAa" style="font-family:Georgia,serif">Aa</button>
   </div>
-  <div class="chrome bot">
-    <div class="scrub"><input type="range" id="rScrub" min="0" max="1000" value="0" aria-label="跳到位置"><span id="rPct">0%</span></div>
-  </div>
+  <div class="chrome bot"><div class="scrub"><input type="range" id="rScrub" min="0" max="1000" value="0"><span id="rPct">0%</span></div></div>
   <div class="panel left toc" id="tocPanel" hidden></div>
   <div class="panel" id="aaPanel" hidden>
-    <h4>字體大小</h4>
+    <h4 data-t="fontSize"></h4>
     <div class="seg"><button id="fsDown" style="font-size:.9rem">A−</button><button id="fsVal" disabled style="opacity:1"></button><button id="fsUp" style="font-size:1.3rem">A+</button></div>
-    <h4>字型</h4>
+    <h4 data-t="font"></h4>
     <div class="seg" id="fontSeg">
       <button data-f="Georgia, serif" style="font-family:Georgia">Georgia</button>
       <button data-f="ui-serif, 'New York', 'Iowan Old Style', serif" style="font-family:ui-serif,'Iowan Old Style',serif">New York</button>
       <button data-f="-apple-system, 'Helvetica Neue', sans-serif" style="font-family:-apple-system,sans-serif">San Francisco</button>
-      <button data-f="'Atkinson Hyperlegible', Verdana, sans-serif" style="font-family:Verdana">好辨識</button>
+      <button data-f="Verdana, 'Atkinson Hyperlegible', sans-serif" style="font-family:Verdana" data-t="legible"></button>
     </div>
-    <h4>行距</h4>
-    <div class="seg" id="lhSeg"><button data-lh="1.4">緊</button><button data-lh="1.65">適中</button><button data-lh="1.9">寬</button></div>
-    <h4>頁邊</h4>
-    <div class="seg" id="mxSeg"><button data-mx="16">窄</button><button data-mx="40">適中</button><button data-mx="90">寬</button></div>
-    <h4>背景</h4>
+    <h4 data-t="lineH"></h4>
+    <div class="seg" id="lhSeg"><button data-lh="1.4" data-t="tight"></button><button data-lh="1.65" data-t="normal"></button><button data-lh="1.9" data-t="wide"></button></div>
+    <h4 data-t="margin"></h4>
+    <div class="seg" id="mxSeg"><button data-mx="16" data-t="narrow"></button><button data-mx="40" data-t="normal"></button><button data-mx="90" data-t="wide"></button></div>
+    <h4 data-t="bg"></h4>
     <div class="seg" id="thSeg">
-      <button data-th="paper"><span class="sw" style="background:#FBF7EE"></span>米白</button>
-      <button data-th="light"><span class="sw" style="background:#fff"></span>白</button>
-      <button data-th="sepia"><span class="sw" style="background:#F1E5CC"></span>復古</button>
-      <button data-th="dark"><span class="sw" style="background:#121212"></span>夜間</button>
+      <button data-th="paper"><span class="sw" style="background:#FBF7EE"></span><span data-t="thPaper"></span></button>
+      <button data-th="light"><span class="sw" style="background:#fff"></span><span data-t="thLight"></span></button>
+      <button data-th="sepia"><span class="sw" style="background:#F1E5CC"></span><span data-t="thSepia"></span></button>
+      <button data-th="dark"><span class="sw" style="background:#121212"></span><span data-t="thDark"></span></button>
     </div>
-    <h4>一次顯示</h4>
-    <div class="seg" id="spSeg"><button data-sp="auto">橫放兩頁</button><button data-sp="none">永遠一頁</button></div>
+    <h4 data-t="spread"></h4>
+    <div class="seg" id="spSeg"><button data-sp="auto" data-t="spAuto"></button><button data-sp="none" data-t="spOne"></button></div>
+    <h4 data-t="tapLookup"></h4>
+    <div class="seg" id="tlSeg"><button data-tl="zh-TW">中文</button><button data-tl="ja">日本語</button><button data-tl="en">English</button></div>
   </div>
+  <div class="pop" id="pop" hidden></div>
+  <button class="selbtn" id="selBtn" hidden></button>
 </div>
 <div class="toast" id="toast"></div>
 
 <script>
+// ================= 介面語言 =================
+const I18N={
+zh:{appName:"書櫃<span>Shelf</span>",import:"＋ 匯入 EPUB / PDF",myBooks:"我的書",continue:"繼續讀",cont:"繼續讀 →",readTo:(p,a)=>`讀到 ${p}%・${a}`,notStarted:"還沒開始",
+ shelfEmpty:"書櫃還是空的。<br>到「找書」搜尋免費英文書，可以照難易度挑，按「下載」就會放進這裡，沒網路也能讀。<br>讀的時候點任何一個字就能看翻譯，查過的字會自動存進「生字本」。",
+ search:"搜尋",searchPh:"書名或作者，例如 Sherlock、Austen",level:"難易度",source:"書源",lvAll:"全部",lvE:"簡單",lvM1:"稍易",lvM:"中等",lvH:"困難",srcAll:"全部",
+ srcNote:"同時搜尋兩個免費、合法的公版書源：<b>Standard Ebooks</b>（排版精美、有難易度分數）和 <b>Project Gutenberg</b>（7 萬多本，透過 GitHub 鏡像下載）。Gutenberg 的書下載後才會算出難易度。",
+ searching:"搜尋中…",noResult:"找不到符合的書，換個關鍵字或難易度試試。",netErr:"連不到書源，確認網路後再試一次。",dl:"下載",dling:"下載中…",dlDone:"已在書櫃・打開",dlFail:"下載失敗，再試一次",
+ added:t=>`《${t}》已放進書櫃`,words:n=>`${Math.round(n/1000)}k 字`,noLevelPg:"Gutenberg 的書還沒有難易度，選「全部」才會出現。",
+ tabShelf:"書櫃",tabFind:"找書",tabWords:"生字本",toc:"目錄",back:"‹ 書櫃",opening:"打開中…",fontSize:"字體大小",font:"字型",legible:"好辨識",lineH:"行距",tight:"緊",normal:"適中",wide:"寬",margin:"頁邊",narrow:"窄",bg:"背景",
+ thPaper:"米白",thLight:"白",thSepia:"復古",thDark:"夜間",spread:"一次顯示",spAuto:"橫放兩頁",spOne:"永遠一頁",tapLookup:"點字翻譯成",
+ chapPage:(c,p,t)=>`${c?c+"・":""}${t?`本章 ${p}/${t} 頁・`:""}`,prev:"上一頁",next:"下一頁",scrubWait:"還在計算全書頁數，等幾秒再拉",noToc:"這本書沒有目錄",
+ imported:n=>`已匯入 ${n} 本`,importing:n=>`匯入 ${n} 本中…`,importFail:f=>`「${f}」打不開：可能有 DRM 鎖，或是掃描成圖片的 PDF（沒有文字可抽）`,removeAgain:"再按一次 × 移除這本書",removed:"已從書櫃移除",noFile:"找不到這本書的檔案",
+ translating:"翻譯中…",trFail:"翻譯失敗，確認網路",speak:"🔊 發音",saved:"★ 已存生字本",unsaved:"☆ 存進生字本",sentTr:"翻譯整句",translate:"翻譯",close:"關閉",
+ wordsEmpty:"還沒有生字。<br>看書時點任何一個字，翻譯會跳出來，同時自動存到這裡。",wlAll:"全部",wlNew:"還不熟",wlKnown:"記住了",review:n=>n?`開始複習（${n}）`:"今天複習完了",
+ fromBook:t=>`出自《${t}》`,lookups:n=>`查過 ${n} 次`,goSource:"回原文",del:"刪除",show:"看答案",remember:"記得 ✓",forgot:"忘了 ✗",reviewDone:"今天的複習完成！",reviewLeft:n=>`還剩 ${n} 個`,exitReview:"結束複習",
+ ago:m=>m<1?"剛剛":m<60?`${m} 分鐘前`:m<1440?`${Math.round(m/60)} 小時前`:`${Math.round(m/1440)} 天前`},
+ja:{appName:"本棚<span>Shelf</span>",import:"＋ EPUB / PDF を追加",myBooks:"マイ本棚",continue:"続きを読む",cont:"続きを読む →",readTo:(p,a)=>`${p}% まで・${a}`,notStarted:"未読",
+ shelfEmpty:"本棚はまだ空です。<br>「本を探す」で無料の英語の本を検索できます。難易度で選んで「ダウンロード」すると、ここに入りオフラインでも読めます。<br>読書中に単語をタップすると翻訳が出て、調べた単語は自動で「単語帳」に保存されます。",
+ search:"検索",searchPh:"タイトルや作者（例：Sherlock、Austen）",level:"難易度",source:"配信元",lvAll:"すべて",lvE:"やさしい",lvM1:"ややかんたん",lvM:"ふつう",lvH:"むずかしい",srcAll:"すべて",
+ srcNote:"無料・合法のパブリックドメイン書籍を 2 か所から同時に検索します：<b>Standard Ebooks</b>（美しい組版、難易度スコア付き）と <b>Project Gutenberg</b>（7 万冊以上、GitHub ミラー経由）。Gutenberg の本は、ダウンロード後に難易度を計算します。",
+ searching:"検索中…",noResult:"該当する本がありません。キーワードや難易度を変えてみてください。",netErr:"配信元に接続できません。ネットを確認してもう一度お試しください。",dl:"ダウンロード",dling:"ダウンロード中…",dlDone:"本棚にあります・開く",dlFail:"失敗しました。もう一度",
+ added:t=>`『${t}』を本棚に追加しました`,words:n=>`${Math.round(n/1000)}k 語`,noLevelPg:"Gutenberg の本には難易度がまだありません。「すべて」を選ぶと表示されます。",
+ tabShelf:"本棚",tabFind:"本を探す",tabWords:"単語帳",toc:"目次",back:"‹ 本棚",opening:"開いています…",fontSize:"文字サイズ",font:"フォント",legible:"読みやすい",lineH:"行間",tight:"狭い",normal:"ふつう",wide:"広い",margin:"余白",narrow:"狭い",bg:"背景",
+ thPaper:"生成り",thLight:"白",thSepia:"セピア",thDark:"夜間",spread:"表示",spAuto:"横向きで見開き",spOne:"常に 1 ページ",tapLookup:"タップ翻訳の言語",
+ chapPage:(c,p,t)=>`${c?c+"・":""}${t?`この章 ${p}/${t} ページ・`:""}`,prev:"前のページ",next:"次のページ",scrubWait:"ページ数を計算中です。数秒後にもう一度",noToc:"この本には目次がありません",
+ imported:n=>`${n} 冊追加しました`,importing:n=>`${n} 冊を追加中…`,importFail:f=>`「${f}」を開けません。DRM 付きか、画像だけの PDF（文字がない）の可能性があります`,removeAgain:"もう一度 × を押すと削除します",removed:"本棚から削除しました",noFile:"この本のファイルが見つかりません",
+ translating:"翻訳中…",trFail:"翻訳できませんでした。ネットを確認してください",speak:"🔊 発音",saved:"★ 単語帳に保存済み",unsaved:"☆ 単語帳に保存",sentTr:"文全体を翻訳",translate:"翻訳",close:"閉じる",
+ wordsEmpty:"単語はまだありません。<br>読書中に単語をタップすると翻訳が表示され、ここに自動で保存されます。",wlAll:"すべて",wlNew:"まだ覚えていない",wlKnown:"覚えた",review:n=>n?`復習する（${n}）`:"今日の復習は完了",
+ fromBook:t=>`『${t}』より`,lookups:n=>`${n} 回調べた`,goSource:"本文へ",del:"削除",show:"答えを見る",remember:"覚えてた ✓",forgot:"忘れた ✗",reviewDone:"今日の復習が終わりました！",reviewLeft:n=>`残り ${n} 個`,exitReview:"復習をやめる",
+ ago:m=>m<1?"たった今":m<60?`${m} 分前`:m<1440?`${Math.round(m/60)} 時間前`:`${Math.round(m/1440)} 日前`},
+en:{appName:"Shelf<span>English reader</span>",import:"＋ Import EPUB / PDF",myBooks:"My books",continue:"Continue reading",cont:"Continue →",readTo:(p,a)=>`${p}% read・${a}`,notStarted:"Not started",
+ shelfEmpty:"Your shelf is empty.<br>Search free English books in Find, filter by difficulty, and tap Download to keep them here for offline reading.<br>While reading, tap any word to see its meaning. Words you look up are saved to Words automatically.",
+ search:"Search",searchPh:"Title or author, e.g. Sherlock, Austen",level:"Difficulty",source:"Source",lvAll:"All",lvE:"Easy",lvM1:"Fairly easy",lvM:"Standard",lvH:"Hard",srcAll:"All",
+ srcNote:"Searches two free, legal public-domain sources at once: <b>Standard Ebooks</b> (beautifully typeset, with reading-ease scores) and <b>Project Gutenberg</b> (70,000+ books, via a GitHub mirror). Gutenberg books get a difficulty score after download.",
+ searching:"Searching…",noResult:"No books match. Try another keyword or difficulty.",netErr:"Can't reach the book source. Check your connection and try again.",dl:"Download",dling:"Downloading…",dlDone:"On your shelf・Open",dlFail:"Download failed, try again",
+ added:t=>`“${t}” added to your shelf`,words:n=>`${Math.round(n/1000)}k words`,noLevelPg:"Gutenberg books have no difficulty yet. Choose All to see them.",
+ tabShelf:"Shelf",tabFind:"Find",tabWords:"Words",toc:"Contents",back:"‹ Shelf",opening:"Opening…",fontSize:"Text size",font:"Font",legible:"Legible",lineH:"Line spacing",tight:"Tight",normal:"Normal",wide:"Wide",margin:"Margins",narrow:"Narrow",bg:"Background",
+ thPaper:"Paper",thLight:"White",thSepia:"Sepia",thDark:"Night",spread:"Pages",spAuto:"Two in landscape",spOne:"Always one",tapLookup:"Translate taps into",
+ chapPage:(c,p,t)=>`${c?c+"・":""}${t?`page ${p}/${t} in chapter・`:""}`,prev:"Previous page",next:"Next page",scrubWait:"Still counting pages, try again in a few seconds",noToc:"This book has no table of contents",
+ imported:n=>`Imported ${n}`,importing:n=>`Importing ${n}…`,importFail:f=>`Couldn't open “${f}”. It may have DRM, or be a scanned PDF with no text.`,removeAgain:"Tap × again to remove this book",removed:"Removed from your shelf",noFile:"This book's file is missing",
+ translating:"Translating…",trFail:"Translation failed, check your connection",speak:"🔊 Say it",saved:"★ Saved to Words",unsaved:"☆ Save to Words",sentTr:"Translate sentence",translate:"Translate",close:"Close",
+ wordsEmpty:"No words yet.<br>Tap any word while reading. Its meaning pops up and the word is saved here.",wlAll:"All",wlNew:"Learning",wlKnown:"Known",review:n=>n?`Review (${n})`:"All reviewed today",
+ fromBook:t=>`From “${t}”`,lookups:n=>`looked up ${n}×`,goSource:"Open in book",del:"Delete",show:"Show answer",remember:"Got it ✓",forgot:"Forgot ✗",reviewDone:"Today's review is done!",reviewLeft:n=>`${n} left`,exitReview:"Stop review",
+ ago:m=>m<1?"just now":m<60?`${m} min ago`:m<1440?`${Math.round(m/60)} h ago`:`${Math.round(m/1440)} d ago`}
+};
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-function toast(t,ms=2200){const e=$("toast");e.textContent=t;e.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove("show"),ms)}
-const SE="https://standardebooks.org";
+const PREF_KEY="shelf-prefs";
+let P={fs:21,font:"Georgia, serif",lh:1.65,mx:40,th:"paper",sp:"auto",ui:null,tl:null};
+try{Object.assign(P,JSON.parse(localStorage.getItem(PREF_KEY)||"{}"))}catch(e){}
+const savePrefs=()=>{try{localStorage.setItem(PREF_KEY,JSON.stringify(P))}catch(e){}};
+if(!P.ui){const n=(navigator.language||"").toLowerCase();P.ui=n.startsWith("ja")?"ja":n.startsWith("zh")?"zh":n.startsWith("en")?"en":"zh"}
+if(!P.tl)P.tl={zh:"zh-TW",ja:"ja",en:"en"}[P.ui];
+let L=I18N[P.ui];
+const t=(k,...a)=>{const v=L[k]??I18N.zh[k];return typeof v==="function"?v(...a):v};
+function applyUI(){
+  L=I18N[P.ui]||I18N.zh;document.documentElement.lang={zh:"zh-Hant",ja:"ja",en:"en"}[P.ui];
+  document.querySelectorAll("[data-t]").forEach(e=>{const v=t(e.dataset.t);if(/<[a-z]/.test(v))e.innerHTML=v;else e.textContent=v});
+  $("sq").placeholder=t("searchPh");$("srcNote").innerHTML=t("srcNote");$("rBack").textContent=t("back");$("rLoading").textContent=t("opening");
+  $("zl").setAttribute("aria-label",t("prev"));$("zr").setAttribute("aria-label",t("next"));
+  const lv={all:"lvAll",e:"lvE",m1:"lvM1",m:"lvM",h:"lvH"};document.querySelectorAll("#lvChips .chip").forEach(c=>c.textContent=t(lv[c.dataset.lv]));
+  document.querySelector('#srcChips [data-src=all]').textContent=t("srcAll");
+  const wl={all:"wlAll",new:"wlNew",known:"wlKnown"};document.querySelectorAll("#wlChips .chip").forEach(c=>c.textContent=t(wl[c.dataset.wl]));
+  $("uiLang").value=P.ui;document.title=P.ui==="ja"?"本棚 Shelf":P.ui==="en"?"Shelf":"書櫃 Shelf";
+}
+$("uiLang").onchange=e=>{const old=P.ui;P.ui=e.target.value;if(P.tl==={zh:"zh-TW",ja:"ja",en:"en"}[old])P.tl={zh:"zh-TW",ja:"ja",en:"en"}[P.ui];savePrefs();applyUI();refreshView()};
+function toast(s,ms=2200){const e=$("toast");e.textContent=s;e.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove("show"),ms)}
 
-// ---------- IndexedDB ----------
-let DB;
-function db(){return DB||(DB=new Promise((res,rej)=>{const r=indexedDB.open("shelf",1);r.onupgradeneeded=()=>{r.result.createObjectStore("books",{keyPath:"id"});r.result.createObjectStore("files")};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}))}
-async function tx(store,mode,fn){const d=await db();return new Promise((res,rej)=>{const t=d.transaction(store,mode);const s=t.objectStore(store);const r=fn(s);t.oncomplete=()=>res(r&&r.result);t.onerror=()=>rej(t.error)})}
-const allBooks=()=>tx("books","readonly",s=>s.getAll());
-const getBook=id=>tx("books","readonly",s=>s.get(id));
-const putBook=b=>tx("books","readwrite",s=>s.put(b));
-const getFile=id=>tx("files","readonly",s=>s.get(id));
-const putFile=(id,blob)=>tx("files","readwrite",s=>s.put(blob,id));
+// ================= 難易度（Flesch Reading Ease） =================
+function lvOf(score){if(score==null||isNaN(score))return null;return score>=80?"e":score>=70?"m1":score>=60?"m":"h"}
+const LVK={e:"lvE",m1:"lvM1",m:"lvM",h:"lvH"};
+const lvPill=s=>{const k=lvOf(s);return k?`<span class="pill ${k}" title="Flesch ${Math.round(s)}">${t(LVK[k])}</span>`:""};
+function syl(w){w=w.toLowerCase().replace(/[^a-z]/g,"");if(!w)return 0;if(w.length<=3)return 1;w=w.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/,"").replace(/^y/,"");const m=w.match(/[aeiouy]{1,2}/g);return m?m.length:1}
+function flesch(text){const sents=text.split(/[.!?]+[\s"”’)]/).filter(s=>/[a-z]/i.test(s));const words=text.match(/[A-Za-z][A-Za-z'’-]*/g)||[];if(words.length<200||!sents.length)return null;
+  let sy=0;for(const w of words)sy+=syl(w);return 206.835-1.015*(words.length/sents.length)-84.6*(sy/words.length)}
+
+// ================= IndexedDB =================
+let DBP;
+function db(){return DBP||(DBP=new Promise((res,rej)=>{const r=indexedDB.open("shelf",2);r.onupgradeneeded=()=>{const d=r.result;if(!d.objectStoreNames.contains("books"))d.createObjectStore("books",{keyPath:"id"});if(!d.objectStoreNames.contains("files"))d.createObjectStore("files");if(!d.objectStoreNames.contains("words"))d.createObjectStore("words",{keyPath:"id"})};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}))}
+async function tx(store,mode,fn){const d=await db();return new Promise((res,rej)=>{const x=d.transaction(store,mode);const r=fn(x.objectStore(store));x.oncomplete=()=>res(r&&r.result);x.onerror=()=>rej(x.error)})}
+const allBooks=()=>tx("books","readonly",s=>s.getAll()),getBook=id=>tx("books","readonly",s=>s.get(id)),putBook=b=>tx("books","readwrite",s=>s.put(b));
+const getFile=id=>tx("files","readonly",s=>s.get(id)),putFile=(id,b)=>tx("files","readwrite",s=>s.put(b,id));
+const allWords=()=>tx("words","readonly",s=>s.getAll()),getWord=id=>tx("words","readonly",s=>s.get(id)),putWord=w=>tx("words","readwrite",s=>s.put(w)),delWord=id=>tx("words","readwrite",s=>s.delete(id));
 async function delBook(id){await tx("books","readwrite",s=>s.delete(id));await tx("files","readwrite",s=>s.delete(id))}
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
 
-// ---------- 設定 ----------
-const PREF_KEY="shelf-prefs";
-let P={fs:21,font:"Georgia, serif",lh:1.65,mx:40,th:"paper",sp:"auto"};
-try{Object.assign(P,JSON.parse(localStorage.getItem(PREF_KEY)||"{}"))}catch(e){}
-const savePrefs=()=>{try{localStorage.setItem(PREF_KEY,JSON.stringify(P))}catch(e){}};
-
-// ---------- 加書 ----------
+// ================= 加書 =================
 async function addEpub(blob,meta){
   const buf=await blob.arrayBuffer();
-  let title=meta.title,author=meta.author,cover=null;
-  try{const bk=ePub(buf);await bk.ready;const md=bk.packaging.metadata;title=title||md.title;author=author||md.creator;
-    const cu=await bk.coverUrl();if(cu){const cb=await (await fetch(cu)).blob();cover=await blobToDataUrl(await shrink(cb))}bk.destroy()}catch(e){console.warn("meta",e)}
+  let title=meta.title,author=meta.author,cover=meta.cover||null,lang=meta.lang||"en",score=meta.score??null;
+  try{const bk=ePub(buf.slice(0));await bk.ready;const md=bk.packaging.metadata;title=title||md.title;author=author||md.creator;lang=(md.language||lang||"en").slice(0,2);
+    if(!cover){const cu=await bk.coverUrl();if(cu){const cb=await (await fetch(cu)).blob();cover=await blobToDataUrl(await shrink(cb))}}
+    if(score==null&&lang==="en")score=await scoreBook(bk);bk.destroy()}catch(e){console.warn("meta",e)}
   const id=meta.id||("imp-"+(title||"book").toLowerCase().replace(/[^a-z0-9]+/g,"-").slice(0,40)+"-"+blob.size);
   const old=await getBook(id);
   await putFile(id,new Blob([buf],{type:"application/epub+zip"}));
-  await putBook(Object.assign({id,title:title||"Untitled",author:author||"",cover,source:meta.source||"import",added:Date.now(),lastRead:0,cfi:null,pct:0,locations:null},old||{},{cover:cover||(old&&old.cover)}));
+  await putBook(Object.assign({id,title:title||"Untitled",author:author||"",source:meta.source||"import",added:Date.now(),lastRead:0,cfi:null,pct:0,locations:null},old||{},{cover:cover||(old&&old.cover)||null,lang,score,words:meta.words??(old&&old.words)??null}));
   return id;
 }
+async function scoreBook(bk){try{let txt="";const items=bk.spine.spineItems.slice(0,40);for(const s of items){if(txt.length>120000)break;try{const d=await s.load(bk.load.bind(bk));const el=d&&(d.body||(d.querySelector&&d.querySelector("body"))||d);txt+=" "+(el.textContent||"");s.unload()}catch(e){console.warn("score",e)}}return flesch(txt.slice(0,120000))}catch(e){return null}}
 function blobToDataUrl(b){return new Promise(r=>{const f=new FileReader();f.onload=()=>r(f.result);f.readAsDataURL(b)})}
 async function shrink(blob){try{const bmp=await createImageBitmap(blob);const w=300,h=Math.round(bmp.height*w/bmp.width);const c=document.createElement("canvas");c.width=w;c.height=h;c.getContext("2d").drawImage(bmp,0,0,w,h);return await new Promise(r=>c.toBlob(r,"image/jpeg",.82))}catch(e){return blob}}
-
 $("importBtn").onclick=()=>$("fileIn").click();
-$("fileIn").onchange=async e=>{const fs=[...e.target.files];e.target.value="";if(!fs.length)return;toast(`匯入 ${fs.length} 本中…`,8000);let n=0;
-  for(const f of fs){try{await addEpub(f,{source:"import"});n++}catch(err){toast(`「${f.name}」打不開，可能不是 EPUB 或有 DRM 鎖`,4000)}}
-  if(n){toast(`已匯入 ${n} 本`);showView("vShelf")}};
+$("fileIn").onchange=async e=>{const fs=[...e.target.files];e.target.value="";if(!fs.length)return;toast(t("importing",fs.length),8000);let n=0;
+  for(const f of fs){try{if(/\.pdf$/i.test(f.name)||f.type==="application/pdf"){await addEpub(await pdfToEpub(f),{source:"pdf",title:f.name.replace(/\.pdf$/i,"").replace(/[_-]+/g," ")})}else await addEpub(f,{source:"import"});n++}catch(err){toast(t("importFail",f.name),4000)}}
+  if(n){toast(t("imported",n));showView("vShelf")}};
 
-// ---------- 書櫃 ----------
+// PDF → 抽文字 → 組成可重新排版的 EPUB（掃描 PDF 沒有文字就會失敗）
+function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement("script");s.src=src;s.onload=res;s.onerror=rej;document.head.appendChild(s)})}
+async function pdfToEpub(file){
+  const V="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/";
+  if(!window.pdfjsLib){await loadScript(V+"pdf.min.js");pdfjsLib.GlobalWorkerOptions.workerSrc=V+"pdf.worker.min.js"}
+  const pdf=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;
+  let meta={};try{meta=(await pdf.getMetadata()).info||{}}catch(e){}
+  const pages=[];let chars=0;
+  for(let n=1;n<=pdf.numPages;n++){
+    const pg=await pdf.getPage(n);const tc=await pg.getTextContent();
+    const lines=[];let cur=null;
+    for(const it of tc.items){if(!("str" in it))continue;const y=Math.round(it.transform[5]);const h=Math.abs(it.transform[3])||it.height||10;
+      if(!cur||Math.abs(cur.y-y)>h*0.5){cur={y,h,x:it.transform[4],t:""};lines.push(cur)}cur.t+=(cur.t&&!cur.t.endsWith(" ")&&it.str&&!it.str.startsWith(" ")&&it.transform[4]-cur.x>2?"":"")+it.str;}
+    // 行 → 段落：行距明顯變大或上一行以句號結尾且較短，就換段
+    const gaps=[];for(let i=1;i<lines.length;i++)gaps.push(lines[i-1].y-lines[i].y);const med=gaps.filter(g=>g>0).sort((a,b)=>a-b)[Math.floor(gaps.length/2)]||14;
+    const maxLen=Math.max(...lines.map(l=>l.t.trim().length),1);
+    const paras=[];let p="";
+    lines.forEach((l,i)=>{const tx=l.t.replace(/\s+/g," ").trim();if(!tx)return;
+      if(/^\d{1,4}$/.test(tx)&&(i===0||i===lines.length-1))return; // 頁碼
+      const gap=i?lines[i-1].y-l.y:0;const prevShort=p&&lines[i-1]&&lines[i-1].t.trim().length<maxLen*0.7&&/[.!?:"”’]$/.test(p);
+      if(p&&(gap>med*1.5||prevShort)){paras.push(p);p=""}
+      p=p?(p.endsWith("-")&&/^[a-z]/.test(tx)?p.slice(0,-1)+tx:p+" "+tx):tx});
+    if(p)paras.push(p);chars+=paras.join("").length;pages.push(paras);
+  }
+  if(chars<200)throw new Error("no text");
+  const per=Math.max(1,Math.round(8));const chapters=[];
+  for(let i=0;i<pages.length;i+=per){const ps=pages.slice(i,i+per).flat();chapters.push({title:`p. ${i+1}–${Math.min(i+per,pages.length)}`,xhtml:ps.map(x=>`<p>${esc(x)}</p>`).join("\n")})}
+  return buildEpub({title:meta.Title||file.name.replace(/\.pdf$/i,""),author:meta.Author||"",lang:"en",chapters,images:[],cover:null});
+}
+
+// ================= 書櫃 =================
 async function renderShelf(){
   const books=(await allBooks()).sort((a,b)=>(b.lastRead||b.added)-(a.lastRead||a.added));
   $("shelfEmpty").hidden=books.length>0;
   const cur=books.find(b=>b.lastRead);
-  $("contWrap").innerHTML=cur?`<div class="sect">繼續讀</div><button class="continue" data-open="${esc(cur.id)}">${coverHTML(cur)}<div style="min-width:0"><p>${esc(cur.author)}</p><h2>${esc(cur.title)}</h2><p>讀到 ${Math.round((cur.pct||0)*100)}%・${ago(cur.lastRead)}</p></div><span class="go">繼續讀 →</span></button>`:"";
-  $("shelf").innerHTML=books.map(b=>`<div class="book"><button data-open="${esc(b.id)}" style="text-align:left;display:flex;flex-direction:column;gap:8px">${coverHTML(b)}<b>${esc(b.title)}</b><small>${esc(b.author)}</small><div class="bar"><i style="width:${Math.round((b.pct||0)*100)}%"></i></div><small>${b.lastRead?Math.round((b.pct||0)*100)+"%":"還沒開始"}</small></button><button class="del" data-del="${esc(b.id)}" aria-label="從書櫃移除">×</button></div>`).join("");
+  $("contWrap").innerHTML=cur?`<div class="sect">${t("continue")}</div><button class="continue" data-open="${esc(cur.id)}">${coverHTML(cur)}<div style="min-width:0"><p>${esc(cur.author)}</p><h2>${esc(cur.title)}</h2><p>${t("readTo",Math.round((cur.pct||0)*100),ago(cur.lastRead))}</p></div><span class="go">${t("cont")}</span></button>`:"";
+  $("shelf").innerHTML=books.map(b=>`<div class="book"><button data-open="${esc(b.id)}">${coverHTML(b)}<b>${esc(b.title)}</b><small>${esc(b.author)}</small><div class="meta">${lvPill(b.score)}</div><div class="bar"><i style="width:${Math.round((b.pct||0)*100)}%"></i></div><small>${b.lastRead?Math.round((b.pct||0)*100)+"%":t("notStarted")}</small></button><button class="del" data-del="${esc(b.id)}" aria-label="remove">×</button></div>`).join("");
 }
 function coverHTML(b){return b.cover?`<div class="cover" style="background-image:url('${b.cover}')"></div>`:`<div class="cover noimg">${esc(b.title)}</div>`}
-function ago(t){const m=Math.round((Date.now()-t)/60000);if(m<1)return"剛剛";if(m<60)return m+" 分鐘前";const h=Math.round(m/60);if(h<24)return h+" 小時前";return Math.round(h/24)+" 天前"}
+const ago=ts=>t("ago",Math.round((Date.now()-ts)/60000));
 let delArm={};
 document.addEventListener("click",async e=>{
-  const o=e.target.closest("[data-open]");if(o){openBook(o.dataset.open);return}
-  const d=e.target.closest("[data-del]");if(d){const id=d.dataset.del;if(delArm[id]&&Date.now()-delArm[id]<3000){await delBook(id);toast("已從書櫃移除");renderShelf()}else{delArm[id]=Date.now();toast("再按一次 × 移除這本書")}}
+  const o=e.target.closest("[data-open]");if(o&&!o.closest("#reader")){openBook(o.dataset.open);return}
+  const d=e.target.closest("[data-del]");if(d){const id=d.dataset.del;if(delArm[id]&&Date.now()-delArm[id]<3000){await delBook(id);toast(t("removed"));renderShelf()}else{delArm[id]=Date.now();toast(t("removeAgain"))}}
 });
 
-// ---------- 分頁 ----------
-function showView(v){document.querySelectorAll(".view").forEach(x=>x.hidden=x.id!==v);document.querySelectorAll(".tabs button").forEach(b=>b.classList.toggle("on",b.dataset.v===v));if(v==="vShelf")renderShelf();if(v==="vFind"&&!$("results").children.length)search();window.scrollTo(0,0)}
+// ================= 分頁 =================
+let curView="vShelf";
+function showView(v){curView=v;document.querySelectorAll(".view").forEach(x=>x.hidden=x.id!==v);document.querySelectorAll(".tabs button").forEach(b=>b.classList.toggle("on",b.dataset.v===v));refreshView();window.scrollTo(0,0)}
+function refreshView(){if(curView==="vShelf")renderShelf();if(curView==="vFind"){if(!lastItems)search();else renderResults()}if(curView==="vWords")renderWords();updateBadge()}
 document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>showView(b.dataset.v));
 
-// ---------- 找書：Standard Ebooks ----------
-let sort="popularity",searching=0;
-document.querySelectorAll("#sortChips .chip").forEach(c=>c.onclick=()=>{sort=c.dataset.sort;document.querySelectorAll("#sortChips .chip").forEach(x=>x.classList.toggle("on",x===c));search()});
+// ================= 找書：Standard Ebooks + Gutenberg（GitHub 鏡像） =================
+const SE="https://standardebooks.org";
+let lvF="all",srcF="all",searching=0,lastItems=null;
+document.querySelectorAll("#lvChips .chip").forEach(c=>c.onclick=()=>{lvF=c.dataset.lv;document.querySelectorAll("#lvChips .chip").forEach(x=>x.classList.toggle("on",x===c));search()});
+document.querySelectorAll("#srcChips .chip").forEach(c=>c.onclick=()=>{srcF=c.dataset.src;document.querySelectorAll("#srcChips .chip").forEach(x=>x.classList.toggle("on",x===c));search()});
 $("sForm").onsubmit=e=>{e.preventDefault();$("sq").blur();search()};
-$("sq").oninput=()=>{$("gLink").href="https://www.gutenberg.org/ebooks/search/?query="+encodeURIComponent($("sq").value.trim())};
+async function searchSE(q){
+  // 選了簡單／稍易時用「最好讀」排序，才撈得到夠多的簡單書
+  const sort=(lvF==="e"||lvF==="m1")?"reading-ease":"popularity";
+  const pages=lvF==="all"?[1]:[1,2];
+  const out=[];
+  for(const pg of pages){
+    const r=await fetch(`${SE}/ebooks?query=${encodeURIComponent(q)}&sort=${sort}&view=list&per-page=48&page=${pg}`);if(!r.ok)break;
+    const doc=new DOMParser().parseFromString(await r.text(),"text/html");
+    const lis=[...doc.querySelectorAll('li[typeof="schema:Book"]')];
+    lis.forEach(li=>{const path=li.getAttribute("about");const img=li.querySelector("img");const det=(li.querySelector(".details p")||{}).textContent||"";
+      const wm=det.match(/([\d,]+)\s+words/);const em=det.match(/([\d.]+)\s+reading ease/);
+      out.push({src:"se",id:"se:"+path,path,title:li.querySelector('p > a [property="schema:name"]')?.textContent||li.querySelector("p a")?.textContent||"",
+        author:[...li.querySelectorAll(".author a")].map(x=>x.textContent).join(", "),img:img?SE+img.getAttribute("src"):null,words:wm?+wm[1].replace(/,/g,""):null,score:em?+em[1]:null})});
+    if(lis.length<48)break;
+  }
+  return out;
+}
+async function searchPG(q){
+  if(!q)return[];
+  const r=await fetch(`https://api.github.com/search/repositories?q=${encodeURIComponent(q)}+org:GITenberg&per_page=30`);if(!r.ok)return[];
+  const d=await r.json();
+  return(d.items||[]).map(it=>{const m=it.name.match(/_(\d+)$/);if(!m)return null;const title=(it.description||it.name.replace(/_\d+$/,"").replace(/-/g," ")).replace(/\s*is a Project Gutenberg book.*$/is,"").trim();
+    const tm=title.match(/^(.*?)\s+by\s+(.*)$/is);
+    return{src:"pg",id:"pg:"+m[1],repo:it.full_name,branch:it.default_branch||"master",gid:m[1],title:(tm?tm[1]:title).trim(),author:tm?cleanAuthor(tm[2]):"",img:null,score:null}}).filter(Boolean);
+}
+function cleanAuthor(a){a=(a||"").split(/\n/)[0].replace(/,?\s*(Sir|Lord|Mrs?\.?)\s*(?=,|$)/g,"").replace(/,\s*\d{3,4}\??\s*-\s*\d{0,4}\??/g,"").replace(/\s+/g," ").trim();const m=a.match(/^([^,]+),\s*([^,]+)$/);return m?m[2]+" "+m[1]:a}
 async function search(){
   const q=$("sq").value.trim();const my=++searching;
-  $("sStatus").textContent="搜尋中…";$("results").innerHTML="";
-  try{
-    const r=await fetch(`${SE}/ebooks?query=${encodeURIComponent(q)}&sort=${sort}&per-page=48`);
-    if(!r.ok)throw new Error(r.status);
-    const doc=new DOMParser().parseFromString(await r.text(),"text/html");
-    if(my!==searching)return;
-    const have=new Set((await allBooks()).map(b=>b.id));
-    const items=[...doc.querySelectorAll('li[typeof="schema:Book"]')].map(li=>{const path=li.getAttribute("about");const img=li.querySelector("img");
-      return{path,title:li.querySelector('p > a [property="schema:name"]')?.textContent||"",author:[...li.querySelectorAll('.author [property="schema:name"]')].map(x=>x.textContent).join(", "),img:img?SE+img.getAttribute("src"):null}});
-    $("sStatus").textContent=items.length?"":(q?`Standard Ebooks 沒有「${q}」。試試下面的 Gutenberg。`:"沒有結果");
-    $("results").innerHTML=items.map(it=>{const id="se:"+it.path;const got=have.has(id);
-      return`<div class="book">${it.img?`<div class="cover" style="background-image:url('${esc(it.img)}')"></div>`:`<div class="cover noimg">${esc(it.title)}</div>`}<b>${esc(it.title)}</b><small>${esc(it.author)}</small>
-      <button class="dl ${got?"done":""}" data-dl="${esc(it.path)}" data-t="${esc(it.title)}" data-a="${esc(it.author)}">${got?"已在書櫃・打開":"下載"}</button></div>`}).join("");
-  }catch(err){if(my===searching)$("sStatus").textContent="連不到書源，確認網路後再試一次。"}
+  $("sStatus").textContent=t("searching");$("results").innerHTML="";
+  const jobs=[srcF!=="pg"?searchSE(q).catch(()=>null):Promise.resolve([]),srcF!=="se"?searchPG(q).catch(()=>null):Promise.resolve([])];
+  const[se,pg]=await Promise.all(jobs);if(my!==searching)return;
+  if(se===null&&pg===null){$("sStatus").textContent=t("netErr");lastItems=[];return}
+  lastItems=[...(se||[]),...(pg||[])];renderResults();
+}
+async function renderResults(){
+  const have=new Set((await allBooks()).map(b=>b.id));
+  let items=lastItems||[];const pgHidden=lvF!=="all"&&items.some(i=>i.src==="pg");
+  if(lvF!=="all")items=items.filter(i=>lvOf(i.score)===lvF);
+  $("sStatus").textContent=items.length?(pgHidden?t("noLevelPg"):""):(pgHidden?t("noLevelPg"):t("noResult"));
+  $("results").innerHTML=items.map(it=>{const got=have.has(it.id);
+    return`<div class="book">${it.img?`<div class="cover" style="background-image:url('${esc(it.img)}')"></div>`:`<div class="cover noimg ${it.src==="pg"?"g":""}">${esc(it.title)}</div>`}<b>${esc(it.title)}</b><small>${esc(it.author)}</small>
+    <div class="meta">${lvPill(it.score)}${it.words?`<small>${t("words",it.words)}</small>`:""}<span class="pill src">${it.src==="se"?"Standard Ebooks":"Gutenberg"}</span></div>
+    <button class="dl ${got?"done":""}" data-dl="${esc(it.id)}">${got?t("dlDone"):t("dl")}</button></div>`}).join("");
 }
 $("results").addEventListener("click",async e=>{
-  const b=e.target.closest("[data-dl]");if(!b)return;const path=b.dataset.dl,id="se:"+path;
-  if(b.classList.contains("done")){openBook(id);return}
-  b.disabled=true;b.textContent="下載中…";
+  const b=e.target.closest("[data-dl]");if(!b)return;const it=(lastItems||[]).find(x=>x.id===b.dataset.dl);if(!it)return;
+  if(b.classList.contains("done")){openBook(it.id);return}
+  b.disabled=true;b.textContent=t("dling");
   try{
-    const page=await (await fetch(SE+path)).text();
-    const m=[...page.matchAll(/href="([^"]+?\/downloads\/[^"]+?\.epub)"/g)].map(x=>x[1]).find(h=>!/kepub|advanced/.test(h));
-    if(!m)throw new Error("no epub link");
-    const r=await fetch(SE+m.replace(/&amp;/g,"&")+"?source=download");
-    if(!r.ok||!/epub|zip|octet/.test(r.headers.get("content-type")||""))throw new Error("bad file");
-    await addEpub(await r.blob(),{id,title:b.dataset.t,author:b.dataset.a,source:"standardebooks"});
-    b.disabled=false;b.classList.add("done");b.textContent="已在書櫃・打開";toast(`《${b.dataset.t}》已放進書櫃`);
-  }catch(err){console.warn(err);b.disabled=false;b.textContent="下載失敗，再試一次"}
+    if(it.src==="se"){
+      const page=await (await fetch(SE+it.path)).text();
+      const m=[...page.matchAll(/href="([^"]+?\/downloads\/[^"]+?\.epub)"/g)].map(x=>x[1]).find(h=>!/kepub|advanced/.test(h));
+      if(!m)throw new Error("no epub link");
+      const r=await fetch(SE+m.replace(/&amp;/g,"&")+"?source=download");
+      if(!r.ok||!/epub|zip|octet/.test(r.headers.get("content-type")||""))throw new Error("bad file");
+      await addEpub(await r.blob(),{id:it.id,title:it.title,author:it.author,source:"standardebooks",score:it.score,words:it.words,lang:"en"});
+    }else{
+      const blob=await gutenbergToEpub(it);
+      await addEpub(blob,{id:it.id,title:it.title,author:it.author,source:"gutenberg",lang:"en"});
+    }
+    b.disabled=false;b.classList.add("done");b.textContent=t("dlDone");toast(t("added",it.title));
+  }catch(err){console.warn(err);b.disabled=false;b.textContent=t("dlFail")}
 });
 
-// ---------- 閱讀器 ----------
-let R=null; // {book, rendition, rec}
-async function openBook(id){
-  const rec=await getBook(id);const blob=await getFile(id);if(!rec||!blob){toast("找不到這本書的檔案");return}
-  const el=$("reader");el.hidden=false;el.classList.remove("ui");$("rLoading").hidden=false;
+// Gutenberg（GITenberg 鏡像）→ 在瀏覽器裡組成 EPUB
+async function gutenbergToEpub(it){
+  const raw=`https://raw.githubusercontent.com/${it.repo}/${it.branch}/`;const id=it.gid;
+  let meta={};try{meta=await (await fetch(raw+"metadata.json")).json()}catch(e){}
+  const title=it.title||meta.title,author=it.author||cleanAuthor(meta.author||"");
+  let chapters=null,images=[];
+  for(const f of[`${id}-h/${id}-h.htm`,`${id}-h/${id}-h.html`,`${id}-h.htm`]){
+    const r=await fetch(raw+f);if(!r.ok)continue;
+    const html=await r.text();const base=raw+f.replace(/[^/]+$/,"");
+    ({chapters,images}=htmlChapters(html,base));if(chapters.length)break;
+  }
+  if(!chapters||!chapters.length){
+    for(const f of[`${id}-0.txt`,`${id}.txt`,`${id}-8.txt`]){const r=await fetch(raw+f);if(!r.ok)continue;
+      let txt;if(f.endsWith("-8.txt")){txt=new TextDecoder("iso-8859-1").decode(await r.arrayBuffer())}else txt=await r.text();
+      chapters=txtChapters(txt);if(chapters.length)break}
+  }
+  if(!chapters||!chapters.length)throw new Error("no content");
+  let cover=null;try{const r=await fetch(raw+"cover.jpg");if(r.ok)cover=await r.blob()}catch(e){}
+  return buildEpub({title,author:author.trim(),lang:meta.lang||"en",chapters,images,cover});
+}
+function stripPG(s){const a=s.search(/\*\*\*\s*START OF (THIS|THE) PROJECT GUTENBERG[^*]*\*\*\*/i);const b=s.search(/\*\*\*\s*END OF (THIS|THE) PROJECT GUTENBERG/i);
+  if(a>=0){s=s.slice(s.indexOf("***",a+3)+3)}if(b>=0){const bb=s.search(/\*\*\*\s*END OF (THIS|THE) PROJECT GUTENBERG/i);if(bb>=0)s=s.slice(0,bb)}return s}
+function htmlChapters(html,base){
+  const doc=new DOMParser().parseFromString(html,"text/html");
+  doc.querySelectorAll("script,style,link,meta,#pg-header,#pg-footer,section.pg-boilerplate,.pg-boilerplate").forEach(n=>n.remove());
+  // 移除 Gutenberg 開頭結尾的授權文字
+  const walker=doc.createTreeWalker(doc.body,NodeFilter.SHOW_TEXT);let startNode=null,endNode=null,n;
+  while(n=walker.nextNode()){if(!startNode&&/\*\*\*\s*START OF (THIS|THE) PROJECT GUTENBERG/i.test(n.data))startNode=n;if(/\*\*\*\s*END OF (THIS|THE) PROJECT GUTENBERG/i.test(n.data))endNode=n}
+  const top=el=>{while(el.parentNode&&el.parentNode!==doc.body)el=el.parentNode;return el};
+  if(startNode){let el=top(startNode);while(el.previousSibling)el.previousSibling.remove();el.remove()}
+  if(endNode){let el=top(endNode);while(el.nextSibling)el.nextSibling.remove();el.remove()}
+  const images=[];let ic=0;
+  doc.querySelectorAll("img").forEach(img=>{const src=img.getAttribute("src");if(!src||ic>=40){img.remove();return}const name=`img${ic++}${(src.match(/\.(jpe?g|png|gif)$/i)||[".jpg"])[0].toLowerCase()}`;images.push({name,url:new URL(src,base).href});img.setAttribute("src","images/"+name);img.removeAttribute("width");img.removeAttribute("height")});
+  doc.querySelectorAll("a[href]").forEach(a=>{if(!/^https?:/.test(a.getAttribute("href")))a.removeAttribute("href")});
+  const cnt=t=>doc.body.querySelectorAll(t).length;const head=(["H2","H3","H1","H4"].map(t=>[t,cnt(t)]).filter(x=>x[1]>=3&&x[1]<500).sort((a,b)=>b[1]-a[1])[0]||["H2"])[0];
+  // 把包著章節標題的外層 div 攤平成一串區塊，再從每個標題切章
+  const blocks=[];const flat=el=>{for(const k of[...el.childNodes]){if(k.nodeType===1&&k.tagName!==head&&k.querySelector&&k.querySelector(head))flat(k);else blocks.push(k)}};flat(doc.body);
+  const chapters=[];let cur={title:"",nodes:[]};
+  for(const k of blocks){if(k.nodeType===1&&k.tagName===head){if(cur.nodes.some(x=>x.textContent&&x.textContent.trim()))chapters.push(cur);cur={title:k.textContent.replace(/\s+/g," ").trim().slice(0,80),nodes:[k]}}else cur.nodes.push(k)}
+  if(cur.nodes.some(x=>x.textContent&&x.textContent.trim()))chapters.push(cur);
+  const ser=new XMLSerializer();
+  return{chapters:chapters.map((c,i)=>({title:c.title||(i===0?"Start":"Section "+(i+1)),xhtml:c.nodes.map(x=>ser.serializeToString(x)).join("\n")})),images};
+}
+function txtChapters(txt){
+  txt=stripPG(txt).replace(/\r\n/g,"\n");
+  const paras=txt.split(/\n\s*\n/).map(p=>p.replace(/\s*\n\s*/g," ").trim()).filter(Boolean);
+  const chapters=[];let cur={title:"Start",ps:[]};
+  for(const p of paras){if(/^(CHAPTER|Chapter|BOOK|Book|PART|Part|STAVE|ACT)\b[\s\S]{0,60}$/.test(p)&&p.length<80){if(cur.ps.length)chapters.push(cur);cur={title:p,ps:[]}}else cur.ps.push(p)}
+  if(cur.ps.length)chapters.push(cur);
+  return chapters.map(c=>({title:c.title,xhtml:`<h2>${esc(c.title)}</h2>`+c.ps.map(p=>`<p>${esc(p)}</p>`).join("\n")}));
+}
+async function buildEpub({title,author,lang,chapters,images,cover}){
+  const zip=new JSZip();zip.file("mimetype","application/epub+zip",{compression:"STORE"});
+  zip.file("META-INF/container.xml",`<?xml version="1.0"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>`);
+  const x=s=>esc(s).replace(/'/g,"&apos;");const man=[],spine=[],nav=[];
+  chapters.forEach((c,i)=>{const f=`c${i}.xhtml`;zip.file("OEBPS/"+f,`<?xml version="1.0" encoding="utf-8"?><!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml" xml:lang="${lang}"><head><title>${x(c.title)}</title><style>img{max-width:100%;height:auto}h1,h2,h3{text-align:center}.pagenum,.pagenum a{display:none}</style></head><body>${c.xhtml}</body></html>`);
+    man.push(`<item id="c${i}" href="${f}" media-type="application/xhtml+xml"/>`);spine.push(`<itemref idref="c${i}"/>`);nav.push(`<li><a href="${f}">${x(c.title)}</a></li>`)});
+  for(const im of images){try{const r=await fetch(im.url);if(!r.ok)continue;zip.file("OEBPS/images/"+im.name,await r.blob());man.push(`<item id="${im.name.replace(/\W/g,"_")}" href="images/${im.name}" media-type="${/png$/.test(im.name)?"image/png":/gif$/.test(im.name)?"image/gif":"image/jpeg"}"/>`)}catch(e){}}
+  if(cover){zip.file("OEBPS/cover.jpg",cover);man.push(`<item id="cover" href="cover.jpg" media-type="image/jpeg" properties="cover-image"/>`)}
+  zip.file("OEBPS/nav.xhtml",`<?xml version="1.0" encoding="utf-8"?><!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"><head><title>Contents</title></head><body><nav epub:type="toc"><ol>${nav.join("")}</ol></nav></body></html>`);
+  zip.file("OEBPS/content.opf",`<?xml version="1.0" encoding="utf-8"?><package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="uid"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="uid">shelf-${Date.now()}</dc:identifier><dc:title>${x(title)}</dc:title><dc:creator>${x(author)}</dc:creator><dc:language>${lang}</dc:language><meta property="dcterms:modified">2026-01-01T00:00:00Z</meta>${cover?'<meta name="cover" content="cover"/>':""}</metadata><manifest><item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>${man.join("")}</manifest><spine>${spine.join("")}</spine></package>`);
+  return zip.generateAsync({type:"blob",mimeType:"application/epub+zip"});
+}
+
+// ================= 閱讀器 =================
+let R=null;
+async function openBook(id,atCfi){
+  const rec=await getBook(id);const blob=await getFile(id);if(!rec||!blob){toast(t("noFile"));return}
+  if(R)await closeReader(true);
+  const el=$("reader");el.hidden=false;el.classList.remove("ui");$("rLoading").hidden=false;closePop();
   $("rTitle").textContent=rec.title;$("rTtl").textContent=rec.title;$("rPos").textContent="";
-  applyChromeTheme();document.documentElement.style.overflow="hidden";
+  document.documentElement.style.overflow="hidden";
   const book=ePub(await blob.arrayBuffer());
   const rendition=book.renderTo("viewer",{width:"100%",height:"100%",flow:"paginated",spread:P.sp,minSpreadWidth:900,allowScriptedContent:false});
   R={book,rendition,rec,id};
@@ -303,64 +548,191 @@ async function openBook(id){
   rendition.hooks.content.register(c=>wireContent(c));
   rendition.on("relocated",onRelocated);
   rendition.on("keyup",onKey);
-  try{await rendition.display(rec.cfi||undefined)}catch(e){await rendition.display()}
+  try{await rendition.display(atCfi||rec.cfi||undefined)}catch(e){await rendition.display()}
   $("rLoading").hidden=true;
   rec.lastRead=Date.now();await putBook(rec);
-  book.loaded.navigation.then(nav=>{R&&(R.toc=nav.toc);buildToc()});
-  // 位置索引（算百分比用），算過就存起來
+  book.loaded.navigation.then(nav=>{if(R&&R.book===book){R.toc=nav.toc;buildToc()}});
   book.ready.then(async()=>{if(rec.locations){book.locations.load(rec.locations)}else{await book.locations.generate(1200);if(!R||R.book!==book)return;rec.locations=book.locations.save();await putBook(rec)}
     const loc=rendition.currentLocation();if(loc&&loc.start)onRelocated(loc)});
 }
 function registerThemes(r){
   const T={paper:["#FBF7EE","#222"],light:["#FFFFFF","#1A1A1A"],sepia:["#F1E5CC","#3B2F1E"],dark:["#121212","#D9D4CA"]};
-  for(const[k,[bg,fg]]of Object.entries(T))r.themes.register(k,{"body":{"background":bg+" !important","color":fg+" !important"},"a":{"color":(k==="dark"?"#E0A070":"#9A4A22")+" !important"},"p":{"text-align":"justify","hyphens":"auto","-webkit-hyphens":"auto"}});
+  for(const[k,[bg,fg]]of Object.entries(T))r.themes.register(k,{"body":{"background":bg+" !important","color":fg+" !important"},"a":{"color":(k==="dark"?"#E0A070":"#9A4A22")+" !important"},"p":{"text-align":"justify","hyphens":"auto","-webkit-hyphens":"auto"},".epubjs-hl":{"fill":"#F3D27A","fill-opacity":"0.55"}});
 }
-function applyChromeTheme(){const el=$("reader");el.className=el.className.replace(/\b(paper|light|sepia|dark)\b/g,"").trim();el.classList.add(P.th==="paper"?"paperx":P.th);document.querySelector('meta[name=theme-color]').content={paper:"#FBF7EE",light:"#FFFFFF",sepia:"#F1E5CC",dark:"#121212"}[P.th]}
+function applyChromeTheme(){const el=$("reader");["paperx","light","sepia","dark"].forEach(c=>el.classList.remove(c));el.classList.add(P.th==="paper"?"paperx":P.th);document.querySelector('meta[name=theme-color]').content={paper:"#FBF7EE",light:"#FFFFFF",sepia:"#F1E5CC",dark:"#121212"}[P.th]}
 function applyPrefs(resize=true){
-  if(!R)return;const r=R.rendition;
-  r.themes.select(P.th);r.themes.fontSize(P.fs+"px");r.themes.font(P.font);r.themes.override("line-height",String(P.lh));
+  if(R){const r=R.rendition;r.themes.select(P.th);r.themes.fontSize(P.fs+"px");r.themes.font(P.font);r.themes.override("line-height",String(P.lh))}
   $("reader").style.setProperty("--mx",P.mx+"px");applyChromeTheme();
   $("fsVal").textContent=P.fs+"px";
-  document.querySelectorAll("#fontSeg button").forEach(b=>b.classList.toggle("on",b.dataset.f===P.font));
-  document.querySelectorAll("#lhSeg button").forEach(b=>b.classList.toggle("on",+b.dataset.lh===P.lh));
-  document.querySelectorAll("#mxSeg button").forEach(b=>b.classList.toggle("on",+b.dataset.mx===P.mx));
-  document.querySelectorAll("#thSeg button").forEach(b=>b.classList.toggle("on",b.dataset.th===P.th));
-  document.querySelectorAll("#spSeg button").forEach(b=>b.classList.toggle("on",b.dataset.sp===P.sp));
-  if(resize){const loc=r.currentLocation();const cfi=loc&&loc.start&&loc.start.cfi;setTimeout(()=>{r.resize();if(cfi)r.display(cfi)},30)}
+  const on=(sel,fn)=>document.querySelectorAll(sel).forEach(b=>b.classList.toggle("on",fn(b)));
+  on("#fontSeg button",b=>b.dataset.f===P.font);on("#lhSeg button",b=>+b.dataset.lh===P.lh);on("#mxSeg button",b=>+b.dataset.mx===P.mx);
+  on("#thSeg button",b=>b.dataset.th===P.th);on("#spSeg button",b=>b.dataset.sp===P.sp);on("#tlSeg button",b=>b.dataset.tl===P.tl);
+  if(resize&&R){const r=R.rendition;const loc=r.currentLocation();const cfi=loc&&loc.start&&loc.start.cfi;setTimeout(()=>{r.resize();if(cfi)r.display(cfi)},30)}
 }
 function onRelocated(loc){
-  if(!R||!loc||!loc.start)return;const rec=R.rec;
+  if(!R||!loc||!loc.start)return;const rec=R.rec;closePop();
   rec.cfi=loc.start.cfi;rec.lastRead=Date.now();
-  const L=R.book.locations;let pct=rec.pct||0;
-  if(L&&L.length&&L.length()){pct=L.percentageFromCfi(loc.start.cfi)||0}
+  const Lc=R.book.locations;let pct=rec.pct||0;
+  if(Lc&&Lc.length&&Lc.length())pct=Lc.percentageFromCfi(loc.start.cfi)||0;
   if(loc.atEnd)pct=1;rec.pct=pct;
-  const d=loc.start.displayed||{};const ch=chapterName(loc.start.href);
-  $("rPos").textContent=`${ch?ch+"・":""}${d.total?"本章 "+d.page+"/"+d.total+" 頁・":""}${Math.round(pct*100)}%`;
+  const d=loc.start.displayed||{};
+  $("rPos").textContent=t("chapPage",chapterName(loc.start.href),d.page,d.total)+Math.round(pct*100)+"%";
   $("rPct").textContent=Math.round(pct*100)+"%";if(!scrubbing)$("rScrub").value=Math.round(pct*1000);
   clearTimeout(onRelocated.t);onRelocated.t=setTimeout(()=>putBook(rec),400);
   markToc(loc.start.href);
 }
-function chapterName(href){if(!R||!R.toc)return"";const base=(href||"").split("#")[0];let best="";const walk=a=>a.forEach(t=>{if(t.href&&t.href.split("#")[0].endsWith(base.split("/").pop()))best=best||t.label.trim();t.subitems&&walk(t.subitems)});walk(R.toc);return best}
-function buildToc(){if(!R||!R.toc)return;let h="";const walk=(a,dep)=>a.forEach(t=>{h+=`<a href="#" class="${dep?"sub":""}" data-href="${esc(t.href)}">${esc(t.label.trim())}</a>`;t.subitems&&dep<1&&walk(t.subitems,dep+1)});walk(R.toc,0);$("tocPanel").innerHTML=h||"<p>這本書沒有目錄</p>"}
+function chapterName(href){if(!R||!R.toc)return"";const base=(href||"").split("#")[0].split("/").pop();let best="";const walk=a=>a.forEach(x=>{if(!best&&x.href&&x.href.split("#")[0].split("/").pop()===base)best=x.label.trim();x.subitems&&walk(x.subitems)});walk(R.toc);return best}
+function buildToc(){if(!R||!R.toc)return;let h="";const walk=(a,dep)=>a.forEach(x=>{h+=`<a href="#" class="${dep?"sub":""}" data-href="${esc(x.href)}">${esc(x.label.trim())}</a>`;x.subitems&&dep<1&&walk(x.subitems,dep+1)});walk(R.toc,0);$("tocPanel").innerHTML=h||`<p>${t("noToc")}</p>`}
 function markToc(href){const base=(href||"").split("#")[0].split("/").pop();let first=null;document.querySelectorAll("#tocPanel a").forEach(a=>{const on=!first&&a.dataset.href.split("#")[0].split("/").pop()===base;if(on)first=a;a.classList.toggle("cur",on)})}
 $("tocPanel").addEventListener("click",e=>{const a=e.target.closest("[data-href]");if(!a)return;e.preventDefault();R.rendition.display(a.dataset.href);closePanels();$("reader").classList.remove("ui")});
 
-// 翻頁：點左右邊、左右滑、鍵盤
-const next=()=>R&&R.rendition.next(),prev=()=>R&&R.rendition.prev();
+const next=()=>{closePop();R&&R.rendition.next()},prev=()=>{closePop();R&&R.rendition.prev()};
 $("zl").onclick=()=>{closePanels();prev()};$("zr").onclick=()=>{closePanels();next()};
 function onKey(e){if(e.key==="ArrowRight"||e.key===" "||e.key==="PageDown")next();else if(e.key==="ArrowLeft"||e.key==="PageUp")prev()}
-document.addEventListener("keydown",e=>{if(!R||$("reader").hidden||e.target.tagName==="INPUT")return;if(e.key==="Escape"){closeReader();return}onKey(e)});
+document.addEventListener("keydown",e=>{if(!R||$("reader").hidden||e.target.tagName==="INPUT")return;if(e.key==="Escape"){if(!$("pop").hidden)closePop();else closeReader();return}onKey(e)});
+
+// 點字查詢、滑動翻頁、長按選取翻譯
 function wireContent(c){
-  const doc=c.document;let sx=0,sy=0,st=0;
-  doc.addEventListener("touchstart",e=>{const t=e.changedTouches[0];sx=t.screenX;sy=t.screenY;st=Date.now()},{passive:true});
-  doc.addEventListener("touchend",e=>{const t=e.changedTouches[0];const dx=t.screenX-sx,dy=t.screenY-sy;
+  const doc=c.document,win=c.window;let sx=0,sy=0,st=0,moved=false;
+  doc.addEventListener("touchstart",e=>{const p=e.changedTouches[0];sx=p.screenX;sy=p.screenY;st=Date.now();moved=false},{passive:true});
+  doc.addEventListener("touchmove",()=>{moved=true},{passive:true});
+  doc.addEventListener("touchend",e=>{const p=e.changedTouches[0];const dx=p.screenX-sx,dy=p.screenY-sy;
     if(Math.abs(dx)>40&&Math.abs(dx)>Math.abs(dy)*1.3&&Date.now()-st<800){if(hasSel(doc))return;dx<0?next():prev()}},{passive:true});
-  doc.addEventListener("click",e=>{if(e.target.closest("a")||hasSel(doc))return;togglUI()});
+  doc.addEventListener("click",e=>{
+    if(e.target.closest("a[href]"))return;
+    if(hasSel(doc))return;
+    if(!$("pop").hidden){closePop();return}
+    const hit=wordAt(doc,e.clientX,e.clientY);
+    if(hit){lookup(hit,c,e);return}
+    togglUI();
+  });
+  doc.addEventListener("selectionchange",()=>{clearTimeout(win.__sel);win.__sel=setTimeout(()=>showSelBtn(doc,c),350)});
   doc.addEventListener("keydown",onKey);
 }
 const hasSel=d=>{const s=d.getSelection&&d.getSelection();return s&&String(s).trim().length>0};
+function caretAt(doc,x,y){if(doc.caretRangeFromPoint)return doc.caretRangeFromPoint(x,y);if(doc.caretPositionFromPoint){const p=doc.caretPositionFromPoint(x,y);if(!p)return null;const r=doc.createRange();r.setStart(p.offsetNode,p.offset);r.collapse(true);return r}return null}
+function wordAt(doc,x,y){
+  const r=caretAt(doc,x,y);if(!r)return null;const node=r.startContainer;if(!node||node.nodeType!==3)return null;
+  const text=node.data;let i=r.startOffset;
+  const isW=ch=>/[\p{L}\p{M}'’-]/u.test(ch);
+  // 確認真的點在字上面（不是行尾空白）
+  if(!isW(text[i]||"")&&isW(text[i-1]||""))i--;
+  if(!isW(text[i]||""))return null;
+  let a=i,b=i+1;
+  const cjk=/[぀-ヿ㐀-鿿]/.test(text[i]);
+  if(cjk&&window.Intl&&Intl.Segmenter){const seg=new Intl.Segmenter(R.rec.lang||"ja",{granularity:"word"});for(const s of seg.segment(text)){if(i>=s.index&&i<s.index+s.segment.length){a=s.index;b=s.index+s.segment.length;break}}}
+  else{while(a>0&&isW(text[a-1]))a--;while(b<text.length&&isW(text[b]))b++;while(a<b&&/['’-]/.test(text[a]))a++;while(b>a&&/['’-]/.test(text[b-1]))b--}
+  const word=text.slice(a,b);if(!word)return null;
+  const range=doc.createRange();range.setStart(node,a);range.setEnd(node,b);
+  const rect=range.getBoundingClientRect();if(x<rect.left-4||x>rect.right+4||y<rect.top-6||y>rect.bottom+6)return null;
+  return{word,range,sentence:sentenceOf(node,a,word)};
+}
+function sentenceOf(node,off,word){
+  let blk=node.parentElement;while(blk&&!/^(P|DIV|LI|BLOCKQUOTE|TD|H\d|SECTION|BODY)$/.test(blk.tagName))blk=blk.parentElement;
+  const full=(blk||node.parentElement).textContent.replace(/\s+/g," ");
+  // 找出這個字在段落中的位置
+  const pre=(node.data.slice(Math.max(0,off-40),off)).replace(/\s+/g," ");let idx=full.indexOf(pre+word);idx=idx>=0?idx+pre.length:full.indexOf(word);if(idx<0)return word;
+  const startRe=/[.!?。！？][”’"')\]]*\s+/g;let s=0,m;while((m=startRe.exec(full))&&m.index+m[0].length<=idx)s=m.index+m[0].length;
+  const endRe=/[.!?。！？][”’"')\]]*(\s|$)/g;endRe.lastIndex=idx+word.length;const e=endRe.exec(full);
+  return full.slice(s,e?e.index+e[0].trimEnd().length:full.length).trim().slice(0,400);
+}
+function showSelBtn(doc,c){
+  const s=doc.getSelection();const txt=String(s||"").trim();const btn=$("selBtn");
+  if(!txt||txt.length>300||!s.rangeCount){btn.hidden=true;return}
+  const rr=s.getRangeAt(0).getBoundingClientRect();const fr=frameRect(c);
+  btn.textContent=t("translate");btn.hidden=false;
+  btn.style.left=Math.max(8,Math.min(innerWidth-120,fr.left+rr.left+rr.width/2-50))+"px";btn.style.top=Math.max(60,fr.top+rr.top-54)+"px";
+  btn.onclick=()=>{btn.hidden=true;const range=s.getRangeAt(0).cloneRange();lookup({word:txt,range,sentence:sentenceOf(range.startContainer.nodeType===3?range.startContainer:range.startContainer.firstChild||range.startContainer,range.startOffset,txt.split(/\s+/)[0]),phrase:true},c,{clientX:rr.left+rr.width/2,clientY:rr.top});try{s.removeAllRanges()}catch(e){}};
+}
+function frameRect(c){const f=[...$("viewer").querySelectorAll("iframe")].find(fr=>fr.contentDocument===c.document);return f?f.getBoundingClientRect():{left:0,top:0}}
 function togglUI(){const el=$("reader");if(!$("aaPanel").hidden||!$("tocPanel").hidden){closePanels();return}el.classList.toggle("ui")}
 function closePanels(){$("aaPanel").hidden=true;$("tocPanel").hidden=true}
+
+// ================= 翻譯 + 生字本 =================
+let popHL=null;
+function closePop(){$("pop").hidden=true;$("selBtn").hidden=true;if(popHL&&R){try{R.rendition.annotations.remove(popHL,"highlight")}catch(e){}}popHL=null}
+async function gtx(q,sl,tl){const u=`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sl||"auto"}&tl=${tl}&dt=t&dt=bd&dt=rm&q=${encodeURIComponent(q)}`;const r=await fetch(u);if(!r.ok)throw new Error(r.status);const d=await r.json();
+  return{tr:(d[0]||[]).map(x=>x&&x[0]).filter(Boolean).join(""),alts:(d[1]||[]).map(p=>({pos:p[0],terms:(p[1]||[]).slice(0,5)})),src:d[2]}}
+async function dictEn(w){try{const r=await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(w.toLowerCase())}`);if(!r.ok)return null;const d=await r.json();const e=d[0];
+  const ipa=e.phonetic||(e.phonetics||[]).map(p=>p.text).find(Boolean)||"";const defs=(e.meanings||[]).slice(0,2).map(m=>({pos:m.partOfSpeech,def:(m.definitions[0]||{}).definition}));return{ipa,defs}}catch(e){return null}}
+const POS={zh:{noun:"名",verb:"動",adjective:"形",adverb:"副",preposition:"介",pronoun:"代",conjunction:"連",interjection:"感"},ja:{noun:"名",verb:"動",adjective:"形",adverb:"副",preposition:"前",pronoun:"代",conjunction:"接",interjection:"感"},en:{}};
+function sayWord(text,lang){try{const ss=speechSynthesis;ss.cancel();const u=new SpeechSynthesisUtterance(text);u.lang=lang==="ja"?"ja-JP":"en-US";u.rate=.9;const v=ss.getVoices().find(v=>v.lang.replace("_","-").startsWith(u.lang.slice(0,2))&&/premium|enhanced|Samantha|Ava|Kyoko|Google/i.test(v.name));if(v)u.voice=v;setTimeout(()=>ss.speak(u),ss.speaking?80:0)}catch(e){}}
+async function lookup(hit,c,ev){
+  if(!R)return;const pop=$("pop");const book=R.rec;const lang=book.lang||"en";
+  // 標黃這個字
+  try{const cfi=c.cfiFromRange(hit.range);popHL=cfi;R.rendition.annotations.highlight(cfi,{},()=>{},"epubjs-hl")}catch(e){}
+  const fr=frameRect(c);const x=fr.left+ev.clientX,y=fr.top+ev.clientY;
+  const word=hit.word.trim();const key=(lang+":"+word.toLowerCase()).slice(0,120);
+  pop.innerHTML=`<div class="ph"><span class="w">${esc(word)}</span><span class="ipa" id="pIpa"></span></div><div class="tr" id="pTr">${t("translating")}</div><div id="pAlt"></div><div id="pDef"></div>
+   <div class="sent"><span id="pSent">${esc(hit.sentence)}</span><div id="pSentTr" style="opacity:.8;margin-top:4px"></div></div>
+   <div class="acts"><button id="pSay">${t("speak")}</button><button id="pSave" class="saved">${t("saved")}</button><button id="pSentBtn">${t("sentTr")}</button></div>`;
+  pop.hidden=false;placePop(x,y);
+  $("pSay").onclick=()=>sayWord(word,lang);
+  $("pSentBtn").onclick=async()=>{$("pSentTr").textContent=t("translating");try{$("pSentTr").textContent=(await gtx(hit.sentence,lang,P.tl)).tr}catch(e){$("pSentTr").textContent=t("trFail")}placePop(x,y)};
+  sayWord(word,lang);
+  let w=await getWord(key);const isNew=!w;
+  w=Object.assign({id:key,word,lang,tl:P.tl,added:Date.now(),lookups:0,box:0,due:Date.now(),known:false},w||{});
+  w.lookups++;w.last=Date.now();w.sentence=hit.sentence;w.bookId=book.id;w.bookTitle=book.title;
+  try{w.cfi=c.cfiFromRange(hit.range)}catch(e){}
+  if(!isNew&&w.known){w.known=false;w.box=Math.max(0,w.box-1);w.due=Date.now()}
+  $("pSave").onclick=async()=>{const ex=await getWord(key);if(ex){await delWord(key);$("pSave").textContent=t("unsaved");$("pSave").classList.remove("saved")}else{await putWord(w);$("pSave").textContent=t("saved");$("pSave").classList.add("saved")}updateBadge()};
+  try{
+    const[g,dic]=await Promise.all([w.tr&&w.tl===P.tl&&w.alts?Promise.resolve({tr:w.tr,alts:w.alts}):gtx(word,lang,P.tl),lang==="en"&&!hit.phrase&&!w.ipa?dictEn(word):Promise.resolve(null)]);
+    if(!pop.isConnected||pop.hidden)return;
+    w.tr=g.tr;w.alts=g.alts;w.tl=P.tl;if(dic){w.ipa=dic.ipa;w.defs=dic.defs}
+    $("pTr").textContent=w.tr;$("pIpa").textContent=w.ipa||"";
+    const pos=POS[P.ui]||{};
+    $("pAlt").innerHTML=(w.alts||[]).slice(0,3).map(a=>`<div class="alt"><b>${esc(pos[a.pos]||a.pos)}</b>${esc(a.terms.join("、"))}</div>`).join("");
+    $("pDef").innerHTML=(w.defs||[]).map(d=>`<div class="def"><i>${esc(d.pos)}</i> ${esc(d.def)}</div>`).join("");
+  }catch(e){$("pTr").textContent=t("trFail")}
+  await putWord(w);updateBadge();placePop(x,y);
+}
+function placePop(x,y){const pop=$("pop");const W=innerWidth,H=innerHeight;const pw=pop.offsetWidth,ph=pop.offsetHeight;
+  let left=Math.max(12,Math.min(W-pw-12,x-pw/2));let top=y+28;if(top+ph>H-20)top=Math.max(12+(parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--safe-t"))||0),y-ph-24);
+  pop.style.left=left+"px";pop.style.top=top+"px"}
+document.addEventListener("click",e=>{if(!$("pop").hidden&&!e.target.closest("#pop")&&!e.target.closest(".zone"))closePop()});
+
+// 生字本
+const BOX=[0,864e5,3*864e5,7*864e5,14*864e5,30*864e5];
+let wlF="all";
+document.querySelectorAll("#wlChips .chip").forEach(c=>c.onclick=()=>{wlF=c.dataset.wl;document.querySelectorAll("#wlChips .chip").forEach(x=>x.classList.toggle("on",x===c));renderWords()});
+const dueWords=ws=>ws.filter(w=>!w.known&&w.due<=Date.now());
+async function updateBadge(){try{const n=dueWords(await allWords()).length;const b=$("dueBadge");b.hidden=!n;b.textContent=n>99?"99+":n}catch(e){}}
+function markSent(s,w){if(!s)return"";const i=s.toLowerCase().indexOf(w.toLowerCase());return i<0?esc(s):esc(s.slice(0,i))+"<mark>"+esc(s.slice(i,i+w.length))+"</mark>"+esc(s.slice(i+w.length))}
+async function renderWords(){
+  if(!$("flash").hidden)return;
+  let ws=(await allWords()).sort((a,b)=>(b.last||b.added)-(a.last||a.added));
+  const due=dueWords(ws).length;$("reviewBtn").textContent=t("review",due);$("reviewBtn").disabled=!due;
+  if(wlF==="new")ws=ws.filter(w=>!w.known);if(wlF==="known")ws=ws.filter(w=>w.known);
+  $("wordsEmpty").hidden=ws.length>0;
+  $("wlist").innerHTML=ws.map(w=>`<div class="wcard"><div class="wh"><span class="w">${esc(w.word)}</span><span class="ph">${esc(w.ipa||"")}</span><button class="ib" data-say="${esc(w.id)}" style="min-height:0;padding:2px 6px">🔊</button></div>
+    <div class="tr">${esc(w.tr||"")}</div><div class="sen">${markSent(w.sentence,w.word)}</div>
+    <div class="wf"><span class="lvl">${[0,1,2,3,4].map(i=>`<i class="${i<w.box||w.known?"on":""}"></i>`).join("")}</span><span>${esc(t("fromBook",w.bookTitle||""))}</span><span>${t("lookups",w.lookups||1)}</span>
+    <button data-go="${esc(w.id)}">${t("goSource")}</button><button data-wdel="${esc(w.id)}">${t("del")}</button></div></div>`).join("");
+}
+$("wlist").addEventListener("click",async e=>{
+  const s=e.target.closest("[data-say]");if(s){const w=await getWord(s.dataset.say);w&&sayWord(w.word,w.lang);return}
+  const g=e.target.closest("[data-go]");if(g){const w=await getWord(g.dataset.go);if(w&&w.bookId)openBook(w.bookId,w.cfi);return}
+  const d=e.target.closest("[data-wdel]");if(d){await delWord(d.dataset.wdel);renderWords();updateBadge()}
+});
+let RV=null;
+$("reviewBtn").onclick=async()=>{const q=dueWords(await allWords()).sort(()=>Math.random()-.5).slice(0,30);if(!q.length)return;RV={q,i:0};$("wlist").hidden=true;$("wlChips").hidden=true;$("flash").hidden=false;$("reviewBtn").hidden=true;card()};
+function card(){
+  const f=$("flash");if(!RV||RV.i>=RV.q.length){f.innerHTML=`<div class="w" style="font-size:1.6rem">${t("reviewDone")}</div><div class="row"><button class="btn" id="rvEnd">${t("exitReview")}</button></div>`;$("rvEnd").onclick=endReview;updateBadge();return}
+  const w=RV.q[RV.i];
+  f.innerHTML=`<small style="color:var(--muted)">${t("reviewLeft",RV.q.length-RV.i)}</small><div class="w">${esc(w.word)}</div><div class="sen">${markSent(w.sentence,w.word)}</div>
+   <div class="ans" id="rvAns" hidden>${esc(w.tr||"")}<div style="font-size:.9rem;font-weight:400;color:var(--muted);margin-top:6px">${esc(w.ipa||"")}</div></div>
+   <div class="row" id="rvA"><button class="btn ghost" id="rvSay">🔊</button><button class="btn" id="rvShow">${t("show")}</button></div>
+   <div class="row" id="rvB" hidden><button class="btn no" id="rvNo">${t("forgot")}</button><button class="btn ok" id="rvOk">${t("remember")}</button></div>
+   <div class="row"><button class="btn ghost" id="rvEnd" style="font-size:.85rem;padding:8px 14px">${t("exitReview")}</button></div>`;
+  $("rvSay").onclick=()=>sayWord(w.word,w.lang);$("rvEnd").onclick=endReview;
+  $("rvShow").onclick=()=>{$("rvAns").hidden=false;$("rvA").hidden=true;$("rvB").hidden=false;sayWord(w.word,w.lang)};
+  const grade=async ok=>{if(ok){w.box=Math.min(5,w.box+1);if(w.box>=5)w.known=true}else w.box=0;w.due=Date.now()+(ok?BOX[w.box]:0);if(!ok)RV.q.push(w);await putWord(w);RV.i++;card()};
+  $("rvOk").onclick=()=>grade(true);$("rvNo").onclick=()=>grade(false);
+}
+function endReview(){RV=null;$("flash").hidden=true;$("wlist").hidden=false;$("wlChips").hidden=false;$("reviewBtn").hidden=false;renderWords();updateBadge()}
+
+// 設定面板
 $("rToc").onclick=()=>{$("aaPanel").hidden=true;$("tocPanel").hidden=!$("tocPanel").hidden};
 $("rAa").onclick=()=>{$("tocPanel").hidden=true;$("aaPanel").hidden=!$("aaPanel").hidden};
 $("fsDown").onclick=()=>{P.fs=Math.max(14,P.fs-1);savePrefs();applyPrefs()};
@@ -370,17 +742,17 @@ document.querySelectorAll("#lhSeg button").forEach(b=>b.onclick=()=>{P.lh=+b.dat
 document.querySelectorAll("#mxSeg button").forEach(b=>b.onclick=()=>{P.mx=+b.dataset.mx;savePrefs();applyPrefs()});
 document.querySelectorAll("#thSeg button").forEach(b=>b.onclick=()=>{P.th=b.dataset.th;savePrefs();applyPrefs(false)});
 document.querySelectorAll("#spSeg button").forEach(b=>b.onclick=()=>{P.sp=b.dataset.sp;savePrefs();if(R){R.rendition.spread(P.sp,900);applyPrefs()}});
+document.querySelectorAll("#tlSeg button").forEach(b=>b.onclick=()=>{P.tl=b.dataset.tl;savePrefs();applyPrefs(false)});
 let scrubbing=false;
 $("rScrub").oninput=e=>{scrubbing=true;$("rPct").textContent=Math.round(e.target.value/10)+"%"};
-$("rScrub").onchange=e=>{scrubbing=false;if(!R)return;const L=R.book.locations;if(L&&L.length&&L.length()){R.rendition.display(L.cfiFromPercentage(e.target.value/1000))}else toast("還在計算全書頁數，等幾秒再拉")};
-$("rBack").onclick=closeReader;
-async function closeReader(){if(!R)return;clearTimeout(onRelocated.t);await putBook(R.rec);try{R.book.destroy()}catch(e){}R=null;$("viewer").innerHTML="";$("reader").hidden=true;closePanels();document.documentElement.style.overflow="";document.querySelector('meta[name=theme-color]').content="#F6F1E7";renderShelf()}
-window.addEventListener("resize",()=>{if(R){clearTimeout(window.__rz);window.__rz=setTimeout(()=>{const loc=R.rendition.currentLocation();R.rendition.resize();loc&&loc.start&&R.rendition.display(loc.start.cfi)},200)}});
+$("rScrub").onchange=e=>{scrubbing=false;if(!R)return;const Lc=R.book.locations;if(Lc&&Lc.length&&Lc.length())R.rendition.display(Lc.cfiFromPercentage(e.target.value/1000));else toast(t("scrubWait"))};
+$("rBack").onclick=()=>closeReader();
+async function closeReader(keep){if(!R)return;closePop();clearTimeout(onRelocated.t);await putBook(R.rec);try{R.book.destroy()}catch(e){}R=null;$("viewer").innerHTML="";if(keep)return;$("reader").hidden=true;closePanels();document.documentElement.style.overflow="";document.querySelector('meta[name=theme-color]').content="#F6F1E7";refreshView()}
+window.addEventListener("resize",()=>{if(R){closePop();clearTimeout(window.__rz);window.__rz=setTimeout(()=>{const loc=R.rendition.currentLocation();R.rendition.resize();loc&&loc.start&&R.rendition.display(loc.start.cfi)},200)}});
 document.addEventListener("visibilitychange",()=>{if(document.hidden&&R)putBook(R.rec)});
 
-// ---------- 啟動 ----------
 if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js").catch(()=>{});
-renderShelf();
+applyUI();applyPrefs(false);renderShelf();updateBadge();
 </script>
 </body>
 </html>
