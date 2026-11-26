@@ -112,6 +112,8 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 #viewer{position:absolute;top:calc(34px + var(--safe-t));bottom:calc(38px + var(--safe-b));left:var(--mx,40px);right:var(--mx,40px)}
 .zone{position:absolute;top:calc(34px + var(--safe-t));bottom:calc(38px + var(--safe-b));width:min(9%,64px);z-index:2}
 .zone.l{left:0}.zone.r{right:0}
+.rmenu{position:absolute;top:calc(4px + var(--safe-t));right:8px;z-index:6;width:44px;height:44px;border-radius:22px;font-size:1.25rem;color:color-mix(in srgb,var(--rfg) 55%,transparent);background:color-mix(in srgb,var(--rbg) 70%,transparent)}
+#reader.ui .rmenu{display:none}
 .rinfo{position:absolute;left:0;right:0;font-size:.78rem;color:color-mix(in srgb,var(--rfg) 50%,transparent);text-align:center;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 60px}
 .rinfo.t{top:calc(10px + var(--safe-t))}.rinfo.b{bottom:calc(12px + var(--safe-b))}
 .chrome{position:absolute;left:0;right:0;z-index:5;background:color-mix(in srgb,var(--rbg) 94%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);transition:transform .2s,opacity .2s}
@@ -160,7 +162,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 <div id="app">
   <div class="top"><h1 data-t="appName">書櫃<span>Shelf</span></h1>
     <div class="topr"><select class="langsel" id="uiLang" aria-label="Language"><option value="zh">繁體中文</option><option value="ja">日本語</option><option value="en">English</option></select>
-    <button class="importbtn" id="importBtn" data-t="import"></button><input type="file" id="fileIn" accept=".epub,.pdf,application/epub+zip,application/pdf" multiple hidden></div></div>
+    <button class="importbtn" id="importBtn" data-t="import"></button><button class="importbtn" id="importUrlBtn" data-t="importUrl"></button><input type="file" id="fileIn" accept=".epub,.pdf,application/epub+zip,application/pdf" multiple hidden></div></div>
 
   <section class="view" id="vShelf">
     <div id="contWrap"></div>
@@ -204,8 +206,10 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
     <button class="ib" id="rBack"></button>
     <button class="ib" id="rToc" data-t="toc"></button>
     <div class="ttl" id="rTtl"></div>
+    <button class="ib" id="rWords" data-t="tabWords"></button>
     <button class="ib" id="rAa" style="font-family:Georgia,serif">Aa</button>
   </div>
+  <button class="rmenu" id="rMenu" aria-label="menu">☰</button>
   <div class="chrome bot"><div class="scrub"><input type="range" id="rScrub" min="0" max="1000" value="0"><span id="rPct">0%</span></div></div>
   <div class="panel left toc" id="tocPanel" hidden></div>
   <div class="panel" id="aaPanel" hidden>
@@ -242,7 +246,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 <script>
 // ================= 介面語言 =================
 const I18N={
-zh:{appName:"書櫃<span>Shelf</span>",import:"＋ 匯入 EPUB / PDF",myBooks:"我的書",continue:"繼續讀",cont:"繼續讀 →",readTo:(p,a)=>`讀到 ${p}%・${a}`,notStarted:"還沒開始",
+zh:{appName:"書櫃<span>Shelf</span>",import:"＋ 匯入 EPUB / PDF",importUrl:"🔗 網址匯入",urlPrompt:"貼上網址（EPUB / PDF / TXT 檔，或文章網頁；Google 雲端、Dropbox、Gutenberg 連結也可以）",urlFail:"抓不到——該網站擋下載或要登入。可以先在 Safari 下載到「檔案」，再用「＋ 匯入」",myBooks:"我的書",continue:"繼續讀",cont:"繼續讀 →",readTo:(p,a)=>`讀到 ${p}%・${a}`,notStarted:"還沒開始",
  shelfEmpty:"書櫃還是空的。<br>到「找書」搜尋免費英文書，可以照難易度挑，按「下載」就會放進這裡，沒網路也能讀。<br>讀的時候點任何一個字就能看翻譯，查過的字會自動存進「生字本」。",
  search:"搜尋",searchPh:"書名或作者，例如 Sherlock、Austen",level:"難易度",source:"書源",lvAll:"全部",lvE:"簡單",lvM1:"稍易",lvM:"中等",lvH:"困難",srcAll:"全部",
  srcNote:"同時搜尋兩個免費、合法的公版書源：<b>Standard Ebooks</b>（排版精美、有難易度分數）和 <b>Project Gutenberg</b>（7 萬多本，透過 GitHub 鏡像下載）。Gutenberg 的書下載後才會算出難易度。",
@@ -256,7 +260,7 @@ zh:{appName:"書櫃<span>Shelf</span>",import:"＋ 匯入 EPUB / PDF",myBooks:"�
  wordsEmpty:"還沒有生字。<br>看書時點任何一個字，翻譯會跳出來，同時自動存到這裡。",wlAll:"全部",wlNew:"還不熟",wlKnown:"記住了",review:n=>n?`開始複習（${n}）`:"今天複習完了",
  fromBook:t=>`出自《${t}》`,lookups:n=>`查過 ${n} 次`,goSource:"回原文",del:"刪除",show:"看答案",remember:"記得 ✓",forgot:"忘了 ✗",reviewDone:"今天的複習完成！",reviewLeft:n=>`還剩 ${n} 個`,exitReview:"結束複習",
  ago:m=>m<1?"剛剛":m<60?`${m} 分鐘前`:m<1440?`${Math.round(m/60)} 小時前`:`${Math.round(m/1440)} 天前`},
-ja:{appName:"本棚<span>Shelf</span>",import:"＋ EPUB / PDF を追加",myBooks:"マイ本棚",continue:"続きを読む",cont:"続きを読む →",readTo:(p,a)=>`${p}% まで・${a}`,notStarted:"未読",
+ja:{appName:"本棚<span>Shelf</span>",import:"＋ EPUB / PDF を追加",importUrl:"🔗 URLで追加",urlPrompt:"URL を貼り付け（EPUB / PDF / TXT、記事ページ、Google ドライブ・Dropbox・Gutenberg のリンクも可）",urlFail:"取得できません——サイトがブロックしているかログインが必要です。Safari で「ファイル」に保存してから「＋ 追加」してください",myBooks:"マイ本棚",continue:"続きを読む",cont:"続きを読む →",readTo:(p,a)=>`${p}% まで・${a}`,notStarted:"未読",
  shelfEmpty:"本棚はまだ空です。<br>「本を探す」で無料の英語の本を検索できます。難易度で選んで「ダウンロード」すると、ここに入りオフラインでも読めます。<br>読書中に単語をタップすると翻訳が出て、調べた単語は自動で「単語帳」に保存されます。",
  search:"検索",searchPh:"タイトルや作者（例：Sherlock、Austen）",level:"難易度",source:"配信元",lvAll:"すべて",lvE:"やさしい",lvM1:"ややかんたん",lvM:"ふつう",lvH:"むずかしい",srcAll:"すべて",
  srcNote:"無料・合法のパブリックドメイン書籍を 2 か所から同時に検索します：<b>Standard Ebooks</b>（美しい組版、難易度スコア付き）と <b>Project Gutenberg</b>（7 万冊以上、GitHub ミラー経由）。Gutenberg の本は、ダウンロード後に難易度を計算します。",
@@ -270,7 +274,7 @@ ja:{appName:"本棚<span>Shelf</span>",import:"＋ EPUB / PDF を追加",myBooks
  wordsEmpty:"単語はまだありません。<br>読書中に単語をタップすると翻訳が表示され、ここに自動で保存されます。",wlAll:"すべて",wlNew:"まだ覚えていない",wlKnown:"覚えた",review:n=>n?`復習する（${n}）`:"今日の復習は完了",
  fromBook:t=>`『${t}』より`,lookups:n=>`${n} 回調べた`,goSource:"本文へ",del:"削除",show:"答えを見る",remember:"覚えてた ✓",forgot:"忘れた ✗",reviewDone:"今日の復習が終わりました！",reviewLeft:n=>`残り ${n} 個`,exitReview:"復習をやめる",
  ago:m=>m<1?"たった今":m<60?`${m} 分前`:m<1440?`${Math.round(m/60)} 時間前`:`${Math.round(m/1440)} 日前`},
-en:{appName:"Shelf<span>English reader</span>",import:"＋ Import EPUB / PDF",myBooks:"My books",continue:"Continue reading",cont:"Continue →",readTo:(p,a)=>`${p}% read・${a}`,notStarted:"Not started",
+en:{appName:"Shelf<span>English reader</span>",import:"＋ Import EPUB / PDF",importUrl:"🔗 Import from URL",urlPrompt:"Paste a link (EPUB / PDF / TXT file, an article page, or a Google Drive / Dropbox / Gutenberg link)",urlFail:"Couldn't fetch it — the site blocks downloads or needs a login. Save it to Files in Safari, then use “＋ Import”.",myBooks:"My books",continue:"Continue reading",cont:"Continue →",readTo:(p,a)=>`${p}% read・${a}`,notStarted:"Not started",
  shelfEmpty:"Your shelf is empty.<br>Search free English books in Find, filter by difficulty, and tap Download to keep them here for offline reading.<br>While reading, tap any word to see its meaning. Words you look up are saved to Words automatically.",
  search:"Search",searchPh:"Title or author, e.g. Sherlock, Austen",level:"Difficulty",source:"Source",lvAll:"All",lvE:"Easy",lvM1:"Fairly easy",lvM:"Standard",lvH:"Hard",srcAll:"All",
  srcNote:"Searches two free, legal public-domain sources at once: <b>Standard Ebooks</b> (beautifully typeset, with reading-ease scores) and <b>Project Gutenberg</b> (70,000+ books, via a GitHub mirror). Gutenberg books get a difficulty score after download.",
@@ -346,6 +350,46 @@ $("importBtn").onclick=()=>$("fileIn").click();
 $("fileIn").onchange=async e=>{const fs=[...e.target.files];e.target.value="";if(!fs.length)return;toast(t("importing",fs.length),8000);let n=0;
   for(const f of fs){try{if(/\.pdf$/i.test(f.name)||f.type==="application/pdf"){await addEpub(await pdfToEpub(f),{source:"pdf",title:f.name.replace(/\.pdf$/i,"").replace(/[_-]+/g," ")})}else await addEpub(f,{source:"import"});n++}catch(err){toast(t("importFail",f.name),4000)}}
   if(n){toast(t("imported",n));showView("vShelf")}};
+
+// 網址匯入：先直接抓，被 CORS 擋就換公開代理；支援 EPUB / PDF / TXT / 網頁(HTML)
+function fixUrl(u){u=u.trim();if(!/^https?:\/\//i.test(u))u="https://"+u;let m;
+  if(m=u.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?.*id=)([\w-]+)/))return`https://drive.google.com/uc?export=download&id=${m[1]}`;
+  if(/dropbox\.com\//.test(u))return u.replace(/^https?:\/\/(www\.)?dropbox\.com/,"https://dl.dropboxusercontent.com").replace(/[?&]dl=0/,"");
+  if(m=u.match(/^https:\/\/github\.com\/([^/]+\/[^/]+)\/blob\/(.+)$/))return`https://raw.githubusercontent.com/${m[1]}/${m[2]}`;
+  if(m=u.match(/^https:\/\/(\w+)\.(?:m\.)?wikipedia\.org\/wiki\/([^?#]+)/))return`https://${m[1]}.wikipedia.org/api/rest_v1/page/html/${m[2]}`;
+  if(m=u.match(/gutenberg\.org\/ebooks\/(\d+)\/?$/))return`https://www.gutenberg.org/ebooks/${m[1]}.epub3.images`;
+  return u}
+const PROXIES=[u=>u,u=>"https://api.allorigins.win/raw?url="+encodeURIComponent(u),u=>"https://api.codetabs.com/v1/proxy?quest="+encodeURIComponent(u),u=>"https://corsproxy.io/?url="+encodeURIComponent(u)];
+async function fetchAny(url){let last;for(const px of PROXIES){try{const ctl=new AbortController();const tm=setTimeout(()=>ctl.abort(),45000);
+  const r=await fetch(px(url),{signal:ctl.signal});clearTimeout(tm);if(!r.ok){last=new Error(r.status);continue}
+  const buf=await r.arrayBuffer();if(buf.byteLength<20){last=new Error("empty");continue}return{buf,ct:(r.headers.get("content-type")||"").toLowerCase()}}catch(e){last=e}}throw last}
+$("importUrlBtn").onclick=async()=>{
+  let url=prompt(t("urlPrompt"));if(!url||!url.trim())return;url=fixUrl(url);
+  toast(t("importing",1),60000);
+  try{
+    const{buf,ct}=await fetchAny(url);const h=new Uint8Array(buf.slice(0,5));
+    const name=decodeURIComponent(url.split("/").pop().split("?")[0]||"");
+    const title=(name.replace(/\.(epub3?|pdf|txt|html?)(\.images)?$/i,"")||"").replace(/[_-]+/g," ")||new URL(url).hostname;
+    if(h[0]===0x25&&h[1]===0x50&&h[2]===0x44&&h[3]===0x46){await addEpub(await pdfToEpub(new File([buf],name||"book.pdf",{type:"application/pdf"})),{source:"url",title})}
+    else if(h[0]===0x50&&h[1]===0x4B){await addEpub(new Blob([buf],{type:"application/epub+zip"}),{source:"url",title})}
+    else{
+      const txt=new TextDecoder().decode(buf);
+      if(/^\s*<(!doctype|html|\?xml|head|body)/i.test(txt)||ct.includes("html")){
+        const doc=new DOMParser().parseFromString(txt,"text/html");
+        const ttl=(doc.querySelector("meta[property='og:title']")||{}).content||doc.title||title;
+        const main=doc.querySelector("article")||doc.querySelector("main")||doc.body;
+        main.querySelectorAll("nav,header,footer,aside,form,iframe,noscript,button,[role=navigation]").forEach(n=>n.remove());
+        const{chapters,images}=htmlChapters("<html><body>"+main.innerHTML+"</body></html>",url);
+        if(!chapters.length||main.textContent.trim().length<200)throw new Error("no text");
+        await addEpub(await buildEpub({title:ttl.trim(),author:new URL(url).hostname,lang:doc.documentElement.lang||"en",chapters,images,cover:null}),{source:"url"});
+      }else{
+        const chapters=txtChapters(txt);if(!chapters.length)throw new Error("no text");
+        await addEpub(await buildEpub({title,author:"",lang:"en",chapters,images:[],cover:null}),{source:"url"});
+      }
+    }
+    toast(t("imported",1));showView("vShelf");
+  }catch(err){console.warn("url import",err);toast(t("urlFail"),7000)}
+};
 
 // PDF → 抽文字 → 組成可重新排版的 EPUB（掃描 PDF 沒有文字就會失敗）
 function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement("script");s.src=src;s.onload=res;s.onerror=rej;document.head.appendChild(s)})}
@@ -747,6 +791,8 @@ let scrubbing=false;
 $("rScrub").oninput=e=>{scrubbing=true;$("rPct").textContent=Math.round(e.target.value/10)+"%"};
 $("rScrub").onchange=e=>{scrubbing=false;if(!R)return;const Lc=R.book.locations;if(Lc&&Lc.length&&Lc.length())R.rendition.display(Lc.cfiFromPercentage(e.target.value/1000));else toast(t("scrubWait"))};
 $("rBack").onclick=()=>closeReader();
+$("rMenu").onclick=()=>{closePop();togglUI()};
+$("rWords").onclick=async()=>{await closeReader();showView("vWords")};
 async function closeReader(keep){if(!R)return;closePop();clearTimeout(onRelocated.t);await putBook(R.rec);try{R.book.destroy()}catch(e){}R=null;$("viewer").innerHTML="";if(keep)return;$("reader").hidden=true;closePanels();document.documentElement.style.overflow="";document.querySelector('meta[name=theme-color]').content="#F6F1E7";refreshView()}
 window.addEventListener("resize",()=>{if(R){closePop();clearTimeout(window.__rz);window.__rz=setTimeout(()=>{const loc=R.rendition.currentLocation();R.rendition.resize();loc&&loc.start&&R.rendition.display(loc.start.cfi)},200)}});
 document.addEventListener("visibilitychange",()=>{if(document.hidden&&R)putBook(R.rec)});

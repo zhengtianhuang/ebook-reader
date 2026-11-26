@@ -1,5 +1,5 @@
 // 離線用：App 本身和函式庫存進快取；書本身存在 IndexedDB
-const C="shelf-v2";
+const C="shelf-v4";
 const CORE=["./","index.html","manifest.webmanifest","icon-512.png",
 "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js",
 "https://cdn.jsdelivr.net/npm/epubjs@0.3.93/dist/epub.min.js"];
