@@ -150,6 +150,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 .pop .alt b{opacity:.65;font-weight:500;margin-right:4px}
 .pop .def{font-size:.88rem;line-height:1.5;margin-top:6px;opacity:.85;font-family:Georgia,serif}
 .pop .sent{margin-top:10px;padding-top:10px;border-top:1px solid color-mix(in srgb,var(--rfg) 12%,transparent);font-size:.88rem;line-height:1.55}
+.mini{border:0;background:none;padding:0 4px;font-size:1rem;cursor:pointer;min-height:0;vertical-align:middle;opacity:.8}[data-ssay],#rvSent{cursor:pointer}
 .pop .acts{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
 .pop .acts button{padding:8px 12px;border-radius:10px;border:1.5px solid color-mix(in srgb,var(--rfg) 18%,transparent);font-weight:700;font-size:.88rem}
 .pop .acts .saved{border-color:var(--accent);color:var(--accent)}
@@ -601,7 +602,7 @@ async function openBook(id,atCfi){
 }
 function registerThemes(r){
   const T={paper:["#FBF7EE","#222"],light:["#FFFFFF","#1A1A1A"],sepia:["#F1E5CC","#3B2F1E"],dark:["#121212","#D9D4CA"]};
-  for(const[k,[bg,fg]]of Object.entries(T))r.themes.register(k,{"body":{"background":bg+" !important","color":fg+" !important"},"a":{"color":(k==="dark"?"#E0A070":"#9A4A22")+" !important"},"p":{"text-align":"justify","hyphens":"auto","-webkit-hyphens":"auto"},".epubjs-hl":{"fill":"#F3D27A","fill-opacity":"0.55"}});
+  for(const[k,[bg,fg]]of Object.entries(T))r.themes.register(k,{"body":{"cursor":"pointer","-webkit-tap-highlight-color":"transparent","background":bg+" !important","color":fg+" !important"},"a":{"color":(k==="dark"?"#E0A070":"#9A4A22")+" !important"},"p":{"text-align":"justify","hyphens":"auto","-webkit-hyphens":"auto"},".epubjs-hl":{"fill":"#F3D27A","fill-opacity":"0.55"}});
 }
 function applyChromeTheme(){const el=$("reader");["paperx","light","sepia","dark"].forEach(c=>el.classList.remove(c));el.classList.add(P.th==="paper"?"paperx":P.th);document.querySelector('meta[name=theme-color]').content={paper:"#FBF7EE",light:"#FFFFFF",sepia:"#F1E5CC",dark:"#121212"}[P.th]}
 function applyPrefs(resize=true){
@@ -638,18 +639,23 @@ document.addEventListener("keydown",e=>{if(!R||$("reader").hidden||e.target.tagN
 // 點字查詢、滑動翻頁、長按選取翻譯
 function wireContent(c){
   const doc=c.document,win=c.window;let sx=0,sy=0,st=0,moved=false;
-  doc.addEventListener("touchstart",e=>{const p=e.changedTouches[0];sx=p.screenX;sy=p.screenY;st=Date.now();moved=false},{passive:true});
+  doc.addEventListener("touchstart",e=>{const p=e.changedTouches[0];sx=p.screenX;sy=p.screenY;st=Date.now();lastTouch=st;moved=false},{passive:true});
   doc.addEventListener("touchmove",()=>{moved=true},{passive:true});
+  // iPad Safari 常常不會把 click 傳給一般文字，所以短按直接在 touchend 處理點字
+  let lastTap=0,lastTouch=0;
   doc.addEventListener("touchend",e=>{const p=e.changedTouches[0];const dx=p.screenX-sx,dy=p.screenY-sy;
-    if(Math.abs(dx)>40&&Math.abs(dx)>Math.abs(dy)*1.3&&Date.now()-st<800){if(hasSel(doc))return;dx<0?next():prev()}},{passive:true});
-  doc.addEventListener("click",e=>{
-    if(e.target.closest("a[href]"))return;
+    if(Math.abs(dx)>40&&Math.abs(dx)>Math.abs(dy)*1.3&&Date.now()-st<800){if(hasSel(doc))return;dx<0?next():prev();return}
+    if(e.touches.length===0&&Math.abs(dx)<10&&Math.abs(dy)<10&&Date.now()-st<450){lastTap=Date.now();onTap({target:e.target,clientX:p.clientX,clientY:p.clientY})}},{passive:true});
+  // 觸控後瀏覽器會再補一個 click，不忽略的話會把剛打開的翻譯卡又關掉
+  doc.addEventListener("click",e=>{if(Date.now()-lastTap<2500||Date.now()-lastTouch<2500)return;onTap(e)});
+  const onTap=e=>{
+    if(e.target&&e.target.closest&&e.target.closest("a[href]"))return;
     if(hasSel(doc))return;
     if(!$("pop").hidden){closePop();return}
     const hit=wordAt(doc,e.clientX,e.clientY);
     if(hit){lookup(hit,c,e);return}
     togglUI();
-  });
+  };
   doc.addEventListener("selectionchange",()=>{clearTimeout(win.__sel);win.__sel=setTimeout(()=>showSelBtn(doc,c),350)});
   doc.addEventListener("keydown",onKey);
 }
@@ -700,18 +706,26 @@ async function gtx(q,sl,tl){const u=`https://translate.googleapis.com/translate_
 async function dictEn(w){try{const r=await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(w.toLowerCase())}`);if(!r.ok)return null;const d=await r.json();const e=d[0];
   const ipa=e.phonetic||(e.phonetics||[]).map(p=>p.text).find(Boolean)||"";const defs=(e.meanings||[]).slice(0,2).map(m=>({pos:m.partOfSpeech,def:(m.definitions[0]||{}).definition}));return{ipa,defs}}catch(e){return null}}
 const POS={zh:{noun:"名",verb:"動",adjective:"形",adverb:"副",preposition:"介",pronoun:"代",conjunction:"連",interjection:"感"},ja:{noun:"名",verb:"動",adjective:"形",adverb:"副",preposition:"前",pronoun:"代",conjunction:"接",interjection:"感"},en:{}};
-function sayWord(text,lang){try{const ss=speechSynthesis;ss.cancel();const u=new SpeechSynthesisUtterance(text);u.lang=lang==="ja"?"ja-JP":"en-US";u.rate=.9;const v=ss.getVoices().find(v=>v.lang.replace("_","-").startsWith(u.lang.slice(0,2))&&/premium|enhanced|Samantha|Ava|Kyoko|Google/i.test(v.name));if(v)u.voice=v;setTimeout(()=>ss.speak(u),ss.speaking?80:0)}catch(e){}}
+// iPad：speak() 必須在手指點下去的當下同步呼叫，不能先 setTimeout，不然 Safari 會靜音擋掉
+const VLANG={en:"en-US",ja:"ja-JP",zh:"zh-TW","zh-TW":"zh-TW",fr:"fr-FR",de:"de-DE",es:"es-ES"};
+function sayWord(text,lang,rate){try{const ss=speechSynthesis;if(!ss||!text)return;const u=new SpeechSynthesisUtterance(text);u.lang=VLANG[lang]||lang||"en-US";u.rate=rate||.9;
+  const vs=ss.getVoices().filter(v=>v.lang.replace("_","-").toLowerCase().startsWith(u.lang.slice(0,2).toLowerCase()));const v=vs.find(v=>/premium|enhanced|Samantha|Ava|Kyoko|Mei-Jia|Google/i.test(v.name))||vs.find(v=>v.lang.replace("_","-")===u.lang)||vs[0];if(v)u.voice=v;
+  if(ss.paused)ss.resume();
+  if(ss.speaking||ss.pending){ss.cancel();setTimeout(()=>ss.speak(u),60)}else ss.speak(u)}catch(e){}}
+try{speechSynthesis.getVoices();speechSynthesis.onvoiceschanged=()=>speechSynthesis.getVoices()}catch(e){}
 async function lookup(hit,c,ev){
   if(!R)return;const pop=$("pop");const book=R.rec;const lang=book.lang||"en";
   // 標黃這個字
   try{const cfi=c.cfiFromRange(hit.range);popHL=cfi;R.rendition.annotations.highlight(cfi,{},()=>{},"epubjs-hl")}catch(e){}
   const fr=frameRect(c);const x=fr.left+ev.clientX,y=fr.top+ev.clientY;
   const word=hit.word.trim();const key=(lang+":"+word.toLowerCase()).slice(0,120);
-  pop.innerHTML=`<div class="ph"><span class="w">${esc(word)}</span><span class="ipa" id="pIpa"></span></div><div class="tr" id="pTr">${t("translating")}</div><div id="pAlt"></div><div id="pDef"></div>
-   <div class="sent"><span id="pSent">${esc(hit.sentence)}</span><div id="pSentTr" style="opacity:.8;margin-top:4px"></div></div>
+  pop.innerHTML=`<div class="ph"><span class="w" id="pWord" data-k="${esc(key)}">${esc(word)}</span><span class="ipa" id="pIpa"></span></div><div class="tr"><span id="pTr">${t("translating")}</span> <button class="mini" id="pTrSay" hidden>🔊</button></div><div id="pAlt"></div><div id="pDef"></div>
+   <div class="sent"><span id="pSent">${esc(hit.sentence)}</span> <button class="mini" id="pSentSay">🔊</button><div id="pSentTr" style="opacity:.8;margin-top:4px"></div></div>
    <div class="acts"><button id="pSay">${t("speak")}</button><button id="pSave" class="saved">${t("saved")}</button><button id="pSentBtn">${t("sentTr")}</button></div>`;
   pop.hidden=false;placePop(x,y);
   $("pSay").onclick=()=>sayWord(word,lang);
+  $("pSentSay").onclick=()=>sayWord(hit.sentence,lang,.85);
+  $("pTrSay").onclick=()=>sayWord($("pTr").textContent,P.tl);
   $("pSentBtn").onclick=async()=>{$("pSentTr").textContent=t("translating");try{$("pSentTr").textContent=(await gtx(hit.sentence,lang,P.tl)).tr}catch(e){$("pSentTr").textContent=t("trFail")}placePop(x,y)};
   sayWord(word,lang);
   let w=await getWord(key);const isNew=!w;
@@ -722,9 +736,10 @@ async function lookup(hit,c,ev){
   $("pSave").onclick=async()=>{const ex=await getWord(key);if(ex){await delWord(key);$("pSave").textContent=t("unsaved");$("pSave").classList.remove("saved")}else{await putWord(w);$("pSave").textContent=t("saved");$("pSave").classList.add("saved")}updateBadge()};
   try{
     const[g,dic]=await Promise.all([w.tr&&w.tl===P.tl&&w.alts?Promise.resolve({tr:w.tr,alts:w.alts}):gtx(word,lang,P.tl),lang==="en"&&!hit.phrase&&!w.ipa?dictEn(word):Promise.resolve(null)]);
-    if(!pop.isConnected||pop.hidden)return;
     w.tr=g.tr;w.alts=g.alts;w.tl=P.tl;if(dic){w.ipa=dic.ipa;w.defs=dic.defs}
-    $("pTr").textContent=w.tr;$("pIpa").textContent=w.ipa||"";
+    // 卡片被關掉也照樣存進生字本，只是不更新畫面
+    if(!pop.isConnected||pop.hidden||$("pWord")?.dataset.k!==key){await putWord(w);updateBadge();return}
+    $("pTr").textContent=w.tr;$("pTrSay").hidden=!w.tr;$("pIpa").textContent=w.ipa||"";
     const pos=POS[P.ui]||{};
     $("pAlt").innerHTML=(w.alts||[]).slice(0,3).map(a=>`<div class="alt"><b>${esc(pos[a.pos]||a.pos)}</b>${esc(a.terms.join("、"))}</div>`).join("");
     $("pDef").innerHTML=(w.defs||[]).map(d=>`<div class="def"><i>${esc(d.pos)}</i> ${esc(d.def)}</div>`).join("");
@@ -743,19 +758,22 @@ document.querySelectorAll("#wlChips .chip").forEach(c=>c.onclick=()=>{wlF=c.data
 const dueWords=ws=>ws.filter(w=>!w.known&&w.due<=Date.now());
 async function updateBadge(){try{const n=dueWords(await allWords()).length;const b=$("dueBadge");b.hidden=!n;b.textContent=n>99?"99+":n}catch(e){}}
 function markSent(s,w){if(!s)return"";const i=s.toLowerCase().indexOf(w.toLowerCase());return i<0?esc(s):esc(s.slice(0,i))+"<mark>"+esc(s.slice(i,i+w.length))+"</mark>"+esc(s.slice(i+w.length))}
+let WC={};
 async function renderWords(){
   if(!$("flash").hidden)return;
   let ws=(await allWords()).sort((a,b)=>(b.last||b.added)-(a.last||a.added));
   const due=dueWords(ws).length;$("reviewBtn").textContent=t("review",due);$("reviewBtn").disabled=!due;
   if(wlF==="new")ws=ws.filter(w=>!w.known);if(wlF==="known")ws=ws.filter(w=>w.known);
   $("wordsEmpty").hidden=ws.length>0;
+  WC=Object.fromEntries(ws.map(w=>[w.id,w]));
   $("wlist").innerHTML=ws.map(w=>`<div class="wcard"><div class="wh"><span class="w">${esc(w.word)}</span><span class="ph">${esc(w.ipa||"")}</span><button class="ib" data-say="${esc(w.id)}" style="min-height:0;padding:2px 6px">🔊</button></div>
-    <div class="tr">${esc(w.tr||"")}</div><div class="sen">${markSent(w.sentence,w.word)}</div>
+    <div class="tr">${esc(w.tr||"")}</div><div class="sen" data-ssay="${esc(w.id)}">${markSent(w.sentence,w.word)} <span class="mini">🔊</span></div>
     <div class="wf"><span class="lvl">${[0,1,2,3,4].map(i=>`<i class="${i<w.box||w.known?"on":""}"></i>`).join("")}</span><span>${esc(t("fromBook",w.bookTitle||""))}</span><span>${t("lookups",w.lookups||1)}</span>
     <button data-go="${esc(w.id)}">${t("goSource")}</button><button data-wdel="${esc(w.id)}">${t("del")}</button></div></div>`).join("");
 }
 $("wlist").addEventListener("click",async e=>{
-  const s=e.target.closest("[data-say]");if(s){const w=await getWord(s.dataset.say);w&&sayWord(w.word,w.lang);return}
+  const ss=e.target.closest("[data-ssay]");if(ss){const w=WC[ss.dataset.ssay];w&&sayWord(w.sentence,w.lang,.85);return}
+  const s=e.target.closest("[data-say]");if(s){const w=WC[s.dataset.say];w&&sayWord(w.word,w.lang);return}
   const g=e.target.closest("[data-go]");if(g){const w=await getWord(g.dataset.go);if(w&&w.bookId)openBook(w.bookId,w.cfi);return}
   const d=e.target.closest("[data-wdel]");if(d){await delWord(d.dataset.wdel);renderWords();updateBadge()}
 });
@@ -764,12 +782,12 @@ $("reviewBtn").onclick=async()=>{const q=dueWords(await allWords()).sort(()=>Mat
 function card(){
   const f=$("flash");if(!RV||RV.i>=RV.q.length){f.innerHTML=`<div class="w" style="font-size:1.6rem">${t("reviewDone")}</div><div class="row"><button class="btn" id="rvEnd">${t("exitReview")}</button></div>`;$("rvEnd").onclick=endReview;updateBadge();return}
   const w=RV.q[RV.i];
-  f.innerHTML=`<small style="color:var(--muted)">${t("reviewLeft",RV.q.length-RV.i)}</small><div class="w">${esc(w.word)}</div><div class="sen">${markSent(w.sentence,w.word)}</div>
+  f.innerHTML=`<small style="color:var(--muted)">${t("reviewLeft",RV.q.length-RV.i)}</small><div class="w">${esc(w.word)}</div><div class="sen" id="rvSent">${markSent(w.sentence,w.word)} <span class="mini">🔊</span></div>
    <div class="ans" id="rvAns" hidden>${esc(w.tr||"")}<div style="font-size:.9rem;font-weight:400;color:var(--muted);margin-top:6px">${esc(w.ipa||"")}</div></div>
    <div class="row" id="rvA"><button class="btn ghost" id="rvSay">🔊</button><button class="btn" id="rvShow">${t("show")}</button></div>
    <div class="row" id="rvB" hidden><button class="btn no" id="rvNo">${t("forgot")}</button><button class="btn ok" id="rvOk">${t("remember")}</button></div>
    <div class="row"><button class="btn ghost" id="rvEnd" style="font-size:.85rem;padding:8px 14px">${t("exitReview")}</button></div>`;
-  $("rvSay").onclick=()=>sayWord(w.word,w.lang);$("rvEnd").onclick=endReview;
+  $("rvSay").onclick=()=>sayWord(w.word,w.lang);$("rvSent").onclick=()=>sayWord(w.sentence,w.lang,.85);$("rvEnd").onclick=endReview;
   $("rvShow").onclick=()=>{$("rvAns").hidden=false;$("rvA").hidden=true;$("rvB").hidden=false;sayWord(w.word,w.lang)};
   const grade=async ok=>{if(ok){w.box=Math.min(5,w.box+1);if(w.box>=5)w.known=true}else w.box=0;w.due=Date.now()+(ok?BOX[w.box]:0);if(!ok)RV.q.push(w);await putWord(w);RV.i++;card()};
   $("rvOk").onclick=()=>grade(true);$("rvNo").onclick=()=>grade(false);
